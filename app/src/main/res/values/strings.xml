@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- file: app/src/main/res/values/strings.xml -->
+<resources>
+    <string name="app_name">Бэйэ Дьоно</string>
+    <string name="cart">Корзина</string>
+    <string name="profile">Профиль</string>
+    <string name="menu">Меню</string>
+    <string name="checkout">Оформление заказа</string>
+    <string name="payment">Оплата</string>
+    <string name="order_status">Статус заказа</string>
+</resources>

@@ -1,0 +1,29 @@
+# file: backend/docker-compose.yml
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: beydono
+      POSTGRES_PASSWORD: beydono_secret
+      POSTGRES_DB: beydono_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  backend:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+asyncpg://beyedono:beyedono_secret@db:5432/beyedono_db
+      SECRET_KEY: super_secret_jwt_key_change_in_production
+      YOOKASSA_SHOP_ID: your_shop_id
+      YOOKASSA_SECRET_KEY: your_secret_key
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+volumes:
+  pgdata:

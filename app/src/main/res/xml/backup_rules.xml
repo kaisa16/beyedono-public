@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- file: app/src/main/res/xml/backup_rules.xml -->
+<full-backup-content>
+    <exclude domain="sharedpref" path="beyedono_prefs.xml"/>
+    <exclude domain="database" path="beyedono.db"/>
+</full-backup-content>

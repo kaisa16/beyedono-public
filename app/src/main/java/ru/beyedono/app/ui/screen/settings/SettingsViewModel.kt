@@ -1,0 +1,36 @@
+// file: app/src/main/java/ru/beyedono/app/ui/screen/settings/SettingsViewModel.kt
+package ru.beyedono.app.ui.screen.settings
+
+import androidx.lifecycle.ViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import javax.inject.Inject
+
+@HiltViewModel
+class SettingsViewModel @Inject constructor() : ViewModel() {
+
+    private val _uiState = MutableStateFlow(SettingsUiState())
+    val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
+
+    private val ADMIN_PIN = "1234"
+
+    fun togglePush(enabled: Boolean) = _uiState.update { it.copy(isPushEnabled = enabled) }
+    fun toggleDarkTheme(enabled: Boolean) = _uiState.update { it.copy(isDarkTheme = enabled) }
+    fun setLanguage(lang: String) = _uiState.update { it.copy(language = lang) }
+
+    fun onAdminClick() = _uiState.update { it.copy(showPinDialog = true, pinInput = "", pinError = false) }
+    fun onDismissPinDialog() = _uiState.update { it.copy(showPinDialog = false) }
+    fun onPinChange(pin: String) = _uiState.update { it.copy(pinInput = pin, pinError = false) }
+
+    fun verifyPin(onSuccess: () -> Unit) {
+        if (_uiState.value.pinInput == ADMIN_PIN) {
+            _uiState.update { it.copy(showPinDialog = false) }
+            onSuccess()
+        } else {
+            _uiState.update { it.copy(pinError = true) }
+        }
+    }
+}
