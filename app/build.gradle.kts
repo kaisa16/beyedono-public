@@ -25,15 +25,12 @@ android {
     }
     signingConfigs {
         create("release") {
-            val props = Properties()
-            val keystoreFile = rootProject.file("keystore.properties")
-            if (keystoreFile.exists()) {
-                props.load(keystoreFile.inputStream())
-                storeFile = file(props["storeFile"] as String)
-                storePassword = props["storePassword"] as String
-                keyAlias = props["keyAlias"] as String
-                keyPassword = props["keyPassword"] as String
-            }
+            // ПАРОЛИ ВПИСАНЫ НАПРЯМУЮ, ЧТОБЫ ОБОЙТИ ОШИБКУ ЧТЕНИЯ
+            storeFile = file("../beyedono-release.jks")
+            storePassword = "123456"
+            keyAlias = "beydono"
+            keyPassword = "123456"
+            storeType = "PKCS12" // Указываем формат явно
         }
     }
     buildTypes {
@@ -67,6 +64,7 @@ android {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.activity.compose)
@@ -92,14 +90,7 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.messaging)
-    
-    // Зависимости 2ГИС УДАЛЕНЫ:
-    // implementation("ru.dgis.sdk:sdk-map:latest.release")
-    // implementation("ru.dgis.sdk:compose-map:latest.release")
-    
-    // ДОБАВЛЕН бесплатный OpenStreetMap (osmdroid):
     implementation("org.osmdroid:osmdroid-android:6.1.18")
-    
     implementation(libs.coil.compose)
     implementation(libs.androidx.datastore.preferences)
     

@@ -9,8 +9,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
-        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
 
     <application
         android:name=".BeyedonoApp"
@@ -29,7 +28,7 @@
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
-            android:theme="@style/Theme.Beyedono">
+            android:theme="@style/Theme.Beyedono.Splash"> <!-- ПРИМЕНЯЕМ ТЕМУ СПЛЭША -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -50,5 +49,8 @@
             </intent-filter>
         </service>
 
+        <meta-data
+            android:name="com.yandex.maps.apikey"
+            android:value="e095a106-8c7f-4040-801c-c8746f996107" />
     </application>
 </manifest>

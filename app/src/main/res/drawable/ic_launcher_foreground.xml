@@ -1,11 +1,17 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- file: app/src/main/res/drawable/ic_launcher_foreground.xml -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- Якутский орнамент (линии) -->
     <path
         android:fillColor="#D4AF37"
-        android:pathData="M54,24 L78,48 L66,48 L66,84 L42,84 L42,48 L30,48 Z" />
+        android:pathData="M54,20 L64,30 L64,40 L54,50 L44,40 L44,30 Z" />
+    <path
+        android:fillColor="#D4AF37"
+        android:pathData="M54,58 L64,68 L64,78 L54,88 L44,78 L44,68 Z" />
+    <!-- Буква Б по центру -->
+    <path
+        android:fillColor="#D4AF37"
+        android:pathData="M40,35 h28 v10 h-18 v8 h18 v10 h-18 v8 h18 v10 h-28 v-46 z" />
 </vector>

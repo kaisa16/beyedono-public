@@ -13,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import dagger.hilt.android.AndroidEntryPoint
 import ru.beyedono.app.ui.navigation.BeyedonoNavHost
 import ru.beyedono.app.ui.theme.BeyedonoTheme
@@ -22,12 +23,13 @@ class MainActivity : ComponentActivity() {
 
     private val requestNotificationPermission = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-        // Разрешение получено или отклонено
-    }
+    ) { }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // ВКЛЮЧАЕМ СИСТЕМНЫЙ SPLASH SCREEN
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+        
         enableEdgeToEdge()
         setContent {
             BeyedonoTheme {
@@ -35,7 +37,6 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    // Запрашиваем разрешение на уведомления для Android 13+
                     LaunchedEffect(Unit) {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                             requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
