@@ -5,8 +5,13 @@ import ru.beyedono.app.data.local.entity.ProductEntity
 
 data class AdminMenuUiState(
     val products: List<ProductEntity> = emptyList(),
+    val availableCategories: List<String> = emptyList(),
     val isLoading: Boolean = true,
     val showDialog: Boolean = false,
-    val editingProduct: ProductEntity? = null, // Если null - добавление, иначе - редактирование
-    val error: String? = null
+    val editingProduct: ProductEntity? = null,
+    val isUploading: Boolean = false,
+    val error: String? = null,
+    // Состояния для управления категориями
+    val showCategoryDialog: Boolean = false,
+    val editingCategory: String? = null 
 )

@@ -2,6 +2,7 @@
 package ru.beyedono.app.data.repository
 
 import ru.beyedono.app.data.remote.AdminApi
+import ru.beyedono.app.data.remote.CategoryCreateRequest
 import ru.beyedono.app.data.remote.ProductCreateRequest
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -12,17 +13,21 @@ class AdminRepository @Inject constructor(
     private val menuRepository: MenuRepository
 ) {
     suspend fun addProduct(request: ProductCreateRequest): Result<Unit> = runCatching {
-        adminApi.createProduct(request)
-        menuRepository.syncMenu()
+        adminApi.createProduct(request); menuRepository.syncMenu()
     }
-
     suspend fun updateProduct(id: String, request: ProductCreateRequest): Result<Unit> = runCatching {
-        adminApi.updateProduct(id, request)
-        menuRepository.syncMenu()
+        adminApi.updateProduct(id, request); menuRepository.syncMenu()
     }
-
     suspend fun deleteProduct(id: String): Result<Unit> = runCatching {
-        adminApi.deleteProduct(id)
-        menuRepository.syncMenu()
+        adminApi.deleteProduct(id); menuRepository.syncMenu()
+    }
+    suspend fun addCategory(name: String): Result<Unit> = runCatching {
+        adminApi.createCategory(CategoryCreateRequest(name)); menuRepository.syncMenu()
+    }
+    suspend fun renameCategory(oldName: String, newName: String): Result<Unit> = runCatching {
+        adminApi.renameCategory(oldName, CategoryCreateRequest(newName)); menuRepository.syncMenu()
+    }
+    suspend fun deleteCategory(catId: String): Result<Unit> = runCatching {
+        adminApi.deleteCategory(catId); menuRepository.syncMenu()
     }
 }
