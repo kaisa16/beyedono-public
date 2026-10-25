@@ -19,10 +19,12 @@ data class CheckoutUiState(
     val floor: String = "",
     val intercom: String = "",
     val note: String = "",
+    val phone: String = "", // <--- НОВОЕ ПОЛЕ
+    val phoneError: String? = null, // <--- ОШИБКА ВАЛИДАЦИИ
     val paymentMethod: String = "SBP",
     val promoCode: String = "",
     val isLoading: Boolean = false,
-    val isGuest: Boolean = false, // <--- НОВОЕ ПОЛЕ
+    val isGuest: Boolean = false,
     val error: String? = null,
     val createdOrderId: String? = null
 )

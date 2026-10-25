@@ -5,12 +5,10 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ru.beyedono.app.data.local.dao.AddressDao
@@ -19,10 +17,10 @@ import ru.beyedono.app.data.local.entity.AddressEntity
 import ru.beyedono.app.data.repository.AddressRepository
 import ru.beyedono.app.data.repository.CartRepository
 import ru.beyedono.app.data.repository.OrderRepository
+import ru.beyedono.app.domain.util.Validators
 import java.util.UUID
 import javax.inject.Inject
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class CheckoutViewModel @Inject constructor(
     private val cartRepository: CartRepository,
@@ -57,13 +55,17 @@ class CheckoutViewModel @Inject constructor(
             }
         }
         
-        // СЛЕДИМ ЗА ПОЛЬЗОВАТЕЛЕМ В РЕАЛЬНОМ ВРЕМЕНИ
         viewModelScope.launch {
-            userDao.getUser().flatMapLatest { user ->
-                val userId = user?.id ?: "guest"
-                _uiState.update { it.copy(isGuest = user == null) }
-                addressDao.getAddressesByUser(userId)
-            }.collect { saved ->
+            val user = userDao.getUser().first()
+            val userId = user?.id ?: "guest"
+            _uiState.update { 
+                it.copy(
+                    isGuest = user == null,
+                    phone = user?.phone ?: "" // ПОДСТАВЛЯЕМ ТЕЛЕФОН ИЗ ПРОФИЛЯ
+                ) 
+            }
+            
+            addressDao.getAddressesByUser(userId).collect { saved ->
                 val uniqueAddresses = saved.distinctBy { "${it.street}_${it.house}_${it.apartment}" }
                 _uiState.update { it.copy(savedAddresses = uniqueAddresses) }
             }
@@ -78,6 +80,7 @@ class CheckoutViewModel @Inject constructor(
     fun onHouseChange(value: String) = _uiState.update { it.copy(house = value) }
     fun onApartmentChange(value: String) = _uiState.update { it.copy(apartment = value) }
     fun onNoteChange(value: String) = _uiState.update { it.copy(note = value) }
+    fun onPhoneChange(value: String) = _uiState.update { it.copy(phone = value, phoneError = null) }
     fun onPaymentMethodChange(value: String) = _uiState.update { it.copy(paymentMethod = value) }
 
     fun placeOrder() {
@@ -85,6 +88,12 @@ class CheckoutViewModel @Inject constructor(
         if (state.isGuest) { _uiState.update { it.copy(error = "Войдите в аккаунт") }; return }
         if (state.cartItems.isEmpty()) { _uiState.update { it.copy(error = "Корзина пуста") }; return }
         if (state.street.isBlank() || state.house.isBlank()) { _uiState.update { it.copy(error = "Заполните улицу и дом") }; return }
+        
+        // ВАЛИДАЦИЯ ТЕЛЕФОНА
+        if (!Validators.isValidPhone(state.phone)) {
+            _uiState.update { it.copy(phoneError = "Некорректный номер телефона") }
+            return
+        }
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }

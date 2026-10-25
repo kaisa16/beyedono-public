@@ -2,23 +2,43 @@
 package ru.beyedono.app.ui.screen.settings
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import ru.beyedono.app.data.repository.SettingsRepository
 import javax.inject.Inject
 
 @HiltViewModel
-class SettingsViewModel @Inject constructor() : ViewModel() {
+class SettingsViewModel @Inject constructor(
+    private val settingsRepository: SettingsRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
     private val ADMIN_PIN = "1234"
 
+    init {
+        viewModelScope.launch {
+            settingsRepository.isDarkTheme.collect { isDark ->
+                _uiState.update { it.copy(isDarkTheme = isDark) }
+            }
+        }
+    }
+
     fun togglePush(enabled: Boolean) = _uiState.update { it.copy(isPushEnabled = enabled) }
-    fun toggleDarkTheme(enabled: Boolean) = _uiState.update { it.copy(isDarkTheme = enabled) }
+    
+    fun toggleDarkTheme(enabled: Boolean) {
+        _uiState.update { it.copy(isDarkTheme = enabled) }
+        viewModelScope.launch {
+            settingsRepository.setDarkTheme(enabled)
+        }
+    }
+    
     fun setLanguage(lang: String) = _uiState.update { it.copy(language = lang) }
 
     fun onAdminClick() = _uiState.update { it.copy(showPinDialog = true, pinInput = "", pinError = false) }

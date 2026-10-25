@@ -18,6 +18,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import ru.beyedono.app.domain.util.PriceFormatter
@@ -27,7 +29,7 @@ import ru.beyedono.app.domain.util.PriceFormatter
 fun CheckoutScreen(
     onNavigateBack: () -> Unit,
     onNavigateToMap: () -> Unit,
-    onNavigateToLogin: () -> Unit, // <--- НОВЫЙ ПАРАМЕТР
+    onNavigateToLogin: () -> Unit,
     onOrderPlaced: (String) -> Unit,
     viewModel: CheckoutViewModel = hiltViewModel()
 ) {
@@ -49,7 +51,6 @@ fun CheckoutScreen(
         bottomBar = {
             Column(modifier = Modifier.padding(16.dp)) {
                 if (uiState.isGuest) {
-                    // Если гость - показываем кнопку входа вместо "Заказать"
                     Button(
                         onClick = onNavigateToLogin,
                         modifier = Modifier.fillMaxWidth().height(56.dp),
@@ -71,6 +72,24 @@ fun CheckoutScreen(
         }
     ) { paddingValues ->
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp).verticalScroll(rememberScrollState())) {
+            
+            // --- БЛОК КОНТАКТНЫХ ДАННЫХ ---
+            Text("Контактные данные", style = MaterialTheme.typography.titleLarge)
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedTextField(
+                value = uiState.phone,
+                onValueChange = viewModel::onPhoneChange,
+                label = { Text("Номер телефона") },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                isError = uiState.phoneError != null,
+                supportingText = { uiState.phoneError?.let { Text(it) } },
+                singleLine = true
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+            // ------------------------------
+
             Text("Адрес доставки", style = MaterialTheme.typography.titleLarge)
             Spacer(modifier = Modifier.height(8.dp))
             
