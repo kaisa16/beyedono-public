@@ -17,7 +17,7 @@ import javax.inject.Inject
 @HiltViewModel
 class MenuViewModel @Inject constructor(
     private val menuRepository: MenuRepository,
-    private val favoritesRepository: FavoritesRepository // <--- ИСПОЛЬЗУЕМ DATastore
+    private val favoritesRepository: FavoritesRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MenuUiState())
@@ -56,6 +56,11 @@ class MenuViewModel @Inject constructor(
                         isAvailable = it.isAvailable, isSpicy = it.isSpicy, isVegetarian = it.isVegetarian
                     )
                 }
+                
+                // СОБИРАЕМ УНИКАЛЬНЫЕ КАТЕГОРИИ
+                val uniqueCategories = listOf("Все") + allProducts.map { it.categoryId }.distinct().sorted()
+                
+                _uiState.update { it.copy(categories = uniqueCategories) }
                 filterProducts()
                 _uiState.update { it.copy(isLoading = false) }
             }

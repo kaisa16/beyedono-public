@@ -27,6 +27,22 @@ fun AdminMenuScreen(
     viewModel: AdminMenuViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var showDeleteDialog by remember { mutableStateOf<String?>(null) }
+
+    if (showDeleteDialog != null) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = null },
+            title = { Text("Удалить товар?") },
+            text = { Text("Вы уверены, что хотите удалить этот товар из меню?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDeleteDialog?.let { viewModel.deleteProduct(it) }
+                    showDeleteDialog = null
+                }) { Text("Удалить", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(onClick = { showDeleteDialog = null }) { Text("Отмена") } }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -52,21 +68,16 @@ fun AdminMenuScreen(
             ) {
                 items(uiState.products, key = { it.id }) { product ->
                     Card(modifier = Modifier.fillMaxWidth()) {
-                        Row(
-                            modifier = Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
+                        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(product.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                 Text("${product.categoryId} | ${PriceFormatter.format(product.price)}", style = MaterialTheme.typography.bodySmall)
-                                if (!product.isAvailable) {
-                                    Text("В СТОП-ЛИСТЕ", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-                                }
+                                if (!product.isAvailable) Text("В СТОП-ЛИСТЕ", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                             }
                             IconButton(onClick = { viewModel.openEditDialog(product) }) {
                                 Icon(Icons.Default.Edit, contentDescription = "Редактировать", tint = MaterialTheme.colorScheme.primary)
                             }
-                            IconButton(onClick = { viewModel.deleteProduct(product.id) }) {
+                            IconButton(onClick = { showDeleteDialog = product.id }) {
                                 Icon(Icons.Default.Delete, contentDescription = "Удалить", tint = MaterialTheme.colorScheme.error)
                             }
                         }
@@ -76,7 +87,6 @@ fun AdminMenuScreen(
         }
     }
 
-    // ДИАЛОГ ДОБАВЛЕНИЯ / РЕДАКТИРОВАНИЯ
     if (uiState.showDialog) {
         var name by remember { mutableStateOf(uiState.editingProduct?.name ?: "") }
         var category by remember { mutableStateOf(uiState.editingProduct?.categoryId ?: "") }
@@ -100,13 +110,9 @@ fun AdminMenuScreen(
                 Button(onClick = {
                     val parsedPrice = price.toDoubleOrNull() ?: 0.0
                     viewModel.saveProduct(name, category, parsedPrice, description, imageUrl)
-                }) {
-                    Text("Сохранить")
-                }
+                }) { Text("Сохранить") }
             },
-            dismissButton = {
-                TextButton(onClick = { viewModel.closeDialog() }) { Text("Отмена") }
-            }
+            dismissButton = { TextButton(onClick = { viewModel.closeDialog() }) { Text("Отмена") } }
         )
     }
 }
