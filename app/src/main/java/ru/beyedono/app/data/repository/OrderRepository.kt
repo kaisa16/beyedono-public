@@ -106,12 +106,16 @@ class OrderRepository @Inject constructor(
         orderApi.updateOrderStatus(orderId, StatusUpdateRequest(newStatus, adminNote))
     }
 
-    // НОВЫЙ МЕТОД ОТМЕНЫ
     suspend fun cancelOrder(orderId: String): Result<Unit> = runCatching {
         orderApi.updateOrderStatus(orderId, StatusUpdateRequest("CANCELLED", null))
     }
 
     suspend fun markAsPaid(orderId: String): Result<Unit> = runCatching {
         orderApi.payOrder(orderId)
+    }
+
+    // НОВЫЙ МЕТОД ДЛЯ ПОЛУЧЕНИЯ ДЕТАЛЕЙ ЗАКАЗА (для повтора)
+    suspend fun getOrderDetailsFromServer(orderId: String): Result<ru.beyedono.app.data.remote.dto.OrderResponse> = runCatching {
+        orderApi.getOrderById(orderId)
     }
 }

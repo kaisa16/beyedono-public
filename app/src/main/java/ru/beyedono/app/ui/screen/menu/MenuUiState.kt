@@ -5,21 +5,13 @@ import ru.beyedono.app.domain.model.Product
 
 data class MenuUiState(
     val categories: List<String> = listOf(
-        "Все", 
-        "Основные блюда", 
-        "Салаты", 
-        "Фаст-Фуд", 
-        "Гамбургеры", 
-        "Чизбургеры", 
-        "Закуски", 
-        "Соусы", 
-        "Пиццы", 
-        "Роллы", 
-        "Напитки"
+        "Все", "Основные блюда", "Салаты", "Фаст-Фуд", "Гамбургеры", 
+        "Чизбургеры", "Закуски", "Соусы", "Пиццы", "Роллы", "Напитки"
     ),
     val selectedCategory: String = "Все",
     val searchQuery: String = "",
     val products: List<Product> = emptyList(),
+    val favoriteIds: Set<String> = emptySet(),
     val isLoading: Boolean = true,
     val error: String? = null
 )

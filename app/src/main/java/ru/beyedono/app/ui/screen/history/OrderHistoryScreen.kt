@@ -29,6 +29,7 @@ import java.util.Locale
 fun OrderHistoryScreen(
     onNavigateBack: () -> Unit,
     onOrderClick: (String) -> Unit,
+    onGoToCart: () -> Unit, // <--- НОВЫЙ ПАРАМЕТР
     viewModel: OrderHistoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -38,9 +39,7 @@ fun OrderHistoryScreen(
             TopAppBar(
                 title = { Text("История заказов") },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Назад")
-                    }
+                    IconButton(onClick = onNavigateBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Назад") }
                 }
             )
         }
@@ -68,9 +67,7 @@ fun OrderHistoryScreen(
                     var expanded by remember { mutableStateOf(false) }
                     
                     Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { expanded = !expanded },
+                        modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded },
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
@@ -84,11 +81,7 @@ fun OrderHistoryScreen(
                                     Text(dateString, style = MaterialTheme.typography.bodySmall)
                                 }
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        text = statusEnum.getDisplayName(),
-                                        color = MaterialTheme.colorScheme.primary,
-                                        style = MaterialTheme.typography.bodyMedium
-                                    )
+                                    Text(text = statusEnum.getDisplayName(), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodyMedium)
                                     Icon(Icons.Default.ExpandMore, contentDescription = null)
                                 }
                             }
@@ -105,9 +98,25 @@ fun OrderHistoryScreen(
                                     if (order.discount > 0.0) {
                                         Text("Скидка: -${PriceFormatter.format(order.discount)}", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
                                     }
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Button(onClick = { onOrderClick(order.id) }, modifier = Modifier.fillMaxWidth()) {
-                                        Text("Подробнее о статусе")
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    
+                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Button(
+                                            onClick = { 
+                                                viewModel.repeatOrder(order.id) {
+                                                    onGoToCart()
+                                                }
+                                            }, 
+                                            modifier = Modifier.weight(1f)
+                                        ) {
+                                            Text("Повторить заказ")
+                                        }
+                                        OutlinedButton(
+                                            onClick = { onOrderClick(order.id) },
+                                            modifier = Modifier.weight(1f)
+                                        ) {
+                                            Text("Статус")
+                                        }
                                     }
                                 }
                             }

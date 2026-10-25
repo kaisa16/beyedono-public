@@ -21,11 +21,8 @@ class CartRepository @Inject constructor(
                 val product = productDao.getProductById(entity.productId)
                 product?.let {
                     CartItem(
-                        productId = it.id,
-                        name = it.name,
-                        price = it.price,
-                        imageUrl = it.imageUrl,
-                        quantity = entity.quantity
+                        productId = it.id, name = it.name, price = it.price,
+                        imageUrl = it.imageUrl, quantity = entity.quantity
                     )
                 }
             }
@@ -35,6 +32,13 @@ class CartRepository @Inject constructor(
     suspend fun addToCart(productId: String, price: Double) {
         val existing = cartDao.getCartItem(productId)
         val newQuantity = (existing?.quantity ?: 0) + 1
+        cartDao.insertCartItem(CartItemEntity(productId, newQuantity, price))
+    }
+
+    // НОВЫЙ МЕТОД ДЛЯ ПОВТОРА ЗАКАЗА (добавляет сразу N штук)
+    suspend fun addQuantityToCart(productId: String, price: Double, quantity: Int) {
+        val existing = cartDao.getCartItem(productId)
+        val newQuantity = (existing?.quantity ?: 0) + quantity
         cartDao.insertCartItem(CartItemEntity(productId, newQuantity, price))
     }
 

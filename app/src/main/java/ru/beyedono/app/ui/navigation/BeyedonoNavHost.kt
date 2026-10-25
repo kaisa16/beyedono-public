@@ -8,6 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import ru.beyedono.app.ui.screen.about.AboutCafeScreen
 import ru.beyedono.app.ui.screen.addresses.AddressListScreen
 import ru.beyedono.app.ui.screen.admin.AdminOrdersScreen
 import ru.beyedono.app.ui.screen.auth.ForgotPasswordScreen
@@ -16,6 +17,7 @@ import ru.beyedono.app.ui.screen.auth.RegisterScreen
 import ru.beyedono.app.ui.screen.cart.CartScreen
 import ru.beyedono.app.ui.screen.checkout.AddressPickerScreen
 import ru.beyedono.app.ui.screen.checkout.CheckoutScreen
+import ru.beyedono.app.ui.screen.favorites.FavoriteScreen
 import ru.beyedono.app.ui.screen.history.OrderHistoryScreen
 import ru.beyedono.app.ui.screen.menu.MenuScreen
 import ru.beyedono.app.ui.screen.onboarding.OnboardingScreen
@@ -77,14 +79,24 @@ fun BeyedonoNavHost(navController: NavHostController = rememberNavController()) 
             OrderStatusScreen(onNavigateBack = { navController.navigate(Routes.MENU) { popUpTo(Routes.MENU) { inclusive = true } } })
         }
         composable(Routes.HISTORY) {
-            OrderHistoryScreen(onNavigateBack = { navController.popBackStack() }, onOrderClick = { orderId -> navController.navigate(Routes.orderStatus(orderId)) })
+            OrderHistoryScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onOrderClick = { orderId -> navController.navigate(Routes.orderStatus(orderId)) },
+                onGoToCart = { 
+                    navController.navigate(Routes.CART) {
+                        popUpTo(Routes.PROFILE) { inclusive = false }
+                    } 
+                }
+            )
         }
         composable(Routes.PROFILE) {
             ProfileScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToHistory = { navController.navigate(Routes.HISTORY) },
                 onNavigateToSettings = { navController.navigate(Routes.SETTINGS) },
-                onNavigateToAddresses = { navController.navigate(Routes.MY_ADDRESSES) }, // <--- ПЕРЕХОД
+                onNavigateToAddresses = { navController.navigate(Routes.MY_ADDRESSES) },
+                onNavigateToAbout = { navController.navigate(Routes.ABOUT_CAFE) },
+                onNavigateToFavorites = { navController.navigate(Routes.FAVORITES) },
                 onLogout = { navController.navigate(Routes.LOGIN) { popUpTo(0) { inclusive = true } } }
             )
         }
@@ -92,10 +104,13 @@ fun BeyedonoNavHost(navController: NavHostController = rememberNavController()) 
             SettingsScreen(onNavigateBack = { navController.popBackStack() }, onNavigateToAdmin = { navController.navigate(Routes.ADMIN_ORDERS) })
         }
         composable(Routes.ADMIN_ORDERS) { AdminOrdersScreen(onNavigateBack = { navController.popBackStack() }) }
-        
-        // ЭКРАН МОИХ АДРЕСОВ
-        composable(Routes.MY_ADDRESSES) {
-            AddressListScreen(onNavigateBack = { navController.popBackStack() })
+        composable(Routes.MY_ADDRESSES) { AddressListScreen(onNavigateBack = { navController.popBackStack() }) }
+        composable(Routes.ABOUT_CAFE) { AboutCafeScreen(onNavigateBack = { navController.popBackStack() }) }
+        composable(Routes.FAVORITES) {
+            FavoriteScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onProductClick = { id -> navController.navigate(Routes.productDetail(id)) }
+            )
         }
     }
 }

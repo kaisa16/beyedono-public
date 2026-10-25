@@ -1,12 +1,7 @@
 // file: app/src/main/java/ru/beyedono/app/ui/screen/menu/MenuScreen.kt
 package ru.beyedono.app.ui.screen.menu
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -16,16 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -49,27 +35,17 @@ fun MenuScreen(
             TopAppBar(
                 title = { Text("Бэйэ Дьоно") },
                 actions = {
-                    IconButton(onClick = onProfileClick) {
-                        Icon(Icons.Default.Person, contentDescription = "Профиль")
-                    }
-                    IconButton(onClick = onCartClick) {
-                        Icon(Icons.Default.ShoppingCart, contentDescription = "Корзина")
-                    }
+                    IconButton(onClick = onProfileClick) { Icon(Icons.Default.Person, contentDescription = "Профиль") }
+                    IconButton(onClick = onCartClick) { Icon(Icons.Default.ShoppingCart, contentDescription = "Корзина") }
                 }
             )
         }
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
+        Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             OutlinedTextField(
                 value = uiState.searchQuery,
                 onValueChange = viewModel::onSearchQueryChange,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                 placeholder = { Text("Поиск по меню") },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 singleLine = true
@@ -101,8 +77,10 @@ fun MenuScreen(
                     items(uiState.products) { product ->
                         ProductCard(
                             product = product,
+                            isFavorite = uiState.favoriteIds.contains(product.id), // <--- ТЕПЕРЬ ПЕРЕДАЕМ
                             onClick = { onProductClick(product.id) },
-                            onAddToCart = { onProductClick(product.id) }
+                            onAddToCart = { onProductClick(product.id) },
+                            onFavoriteToggle = { viewModel.toggleFavorite(product.id) } // <--- И ЭТО
                         )
                     }
                 }

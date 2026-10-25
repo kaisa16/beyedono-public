@@ -9,13 +9,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import ru.beyedono.app.data.repository.FavoritesRepository
 import ru.beyedono.app.data.repository.MenuRepository
 import ru.beyedono.app.domain.model.Product
 import javax.inject.Inject
 
 @HiltViewModel
 class MenuViewModel @Inject constructor(
-    private val menuRepository: MenuRepository
+    private val menuRepository: MenuRepository,
+    private val favoritesRepository: FavoritesRepository // <--- ИСПОЛЬЗУЕМ DATastore
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MenuUiState())
@@ -25,6 +27,21 @@ class MenuViewModel @Inject constructor(
 
     init {
         loadMenu()
+        loadFavorites()
+    }
+
+    private fun loadFavorites() {
+        viewModelScope.launch {
+            favoritesRepository.favorites.collect { ids ->
+                _uiState.update { it.copy(favoriteIds = ids) }
+            }
+        }
+    }
+
+    fun toggleFavorite(productId: String) {
+        viewModelScope.launch {
+            favoritesRepository.toggleFavorite(productId)
+        }
     }
 
     fun loadMenu() {
@@ -34,15 +51,9 @@ class MenuViewModel @Inject constructor(
             menuRepository.getLocalProducts().collect { entities ->
                 allProducts = entities.map {
                     Product(
-                        id = it.id,
-                        categoryId = it.categoryId,
-                        name = it.name,
-                        description = it.description,
-                        price = it.price,
-                        imageUrl = it.imageUrl,
-                        isAvailable = it.isAvailable,
-                        isSpicy = it.isSpicy,
-                        isVegetarian = it.isVegetarian
+                        id = it.id, categoryId = it.categoryId, name = it.name,
+                        description = it.description, price = it.price, imageUrl = it.imageUrl,
+                        isAvailable = it.isAvailable, isSpicy = it.isSpicy, isVegetarian = it.isVegetarian
                     )
                 }
                 filterProducts()
@@ -64,17 +75,12 @@ class MenuViewModel @Inject constructor(
     private fun filterProducts() {
         val state = _uiState.value
         var filtered = allProducts
-
         if (state.selectedCategory != "Все") {
-            filtered = filtered.filter { 
-                it.categoryId.equals(state.selectedCategory, ignoreCase = true) 
-            }
+            filtered = filtered.filter { it.categoryId.equals(state.selectedCategory, ignoreCase = true) }
         }
-
         if (state.searchQuery.isNotBlank()) {
             filtered = filtered.filter { it.name.contains(state.searchQuery, ignoreCase = true) }
         }
-
         _uiState.update { it.copy(products = filtered) }
     }
 }

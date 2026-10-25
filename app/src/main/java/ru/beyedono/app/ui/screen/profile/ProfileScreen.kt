@@ -22,7 +22,9 @@ fun ProfileScreen(
     onNavigateBack: () -> Unit,
     onNavigateToHistory: () -> Unit,
     onNavigateToSettings: () -> Unit,
-    onNavigateToAddresses: () -> Unit, // <--- НОВЫЙ ПАРАМЕТР
+    onNavigateToAddresses: () -> Unit,
+    onNavigateToAbout: () -> Unit,
+    onNavigateToFavorites: () -> Unit, // <--- НОВЫЙ ПАРАМЕТР
     onLogout: () -> Unit,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
@@ -36,10 +38,7 @@ fun ProfileScreen(
             title = { Text("Удалить аккаунт?") },
             text = { Text("Все ваши данные и история заказов будут безвозвратно удалены.") },
             confirmButton = {
-                TextButton(onClick = {
-                    showDeleteDialog = false
-                    viewModel.deleteAccount(onLogout)
-                }) { Text("Удалить") }
+                TextButton(onClick = { showDeleteDialog = false; viewModel.deleteAccount(onLogout) }) { Text("Удалить") }
             },
             dismissButton = { TextButton(onClick = { showDeleteDialog = false }) { Text("Отмена") } }
         )
@@ -95,9 +94,9 @@ fun ProfileScreen(
 
                 HorizontalDivider()
                 ProfileMenuItem("История заказов", Icons.Default.History, onNavigateToHistory)
-                ProfileMenuItem("Мои адреса", Icons.Default.LocationOn, onNavigateToAddresses) // <--- КНОПКА
-                ProfileMenuItem("Способы оплаты", Icons.Default.Payment, {})
-                ProfileMenuItem("Избранное", Icons.Default.Favorite, {})
+                ProfileMenuItem("Мои адреса", Icons.Default.LocationOn, onNavigateToAddresses)
+                ProfileMenuItem("Избранное", Icons.Default.Favorite, onNavigateToFavorites) // <--- КНОПКА
+                ProfileMenuItem("О кафе", Icons.Default.Info, onNavigateToAbout)
                 ProfileMenuItem("Настройки", Icons.Default.Settings, onNavigateToSettings)
 
                 HorizontalDivider()

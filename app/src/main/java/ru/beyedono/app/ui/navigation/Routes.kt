@@ -18,7 +18,9 @@ object Routes {
     const val PROFILE = "profile"
     const val SETTINGS = "settings"
     const val ADMIN_ORDERS = "admin_orders"
-    const val MY_ADDRESSES = "my_addresses" // <--- НОВЫЙ МАРШРУТ
+    const val MY_ADDRESSES = "my_addresses"
+    const val ABOUT_CAFE = "about_cafe"
+    const val FAVORITES = "favorites"
 
     fun productDetail(productId: String) = "product_detail/$productId"
     fun payment(orderId: String) = "payment/$orderId"

@@ -9,12 +9,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import ru.beyedono.app.data.repository.CartRepository
 import ru.beyedono.app.data.repository.OrderRepository
 import javax.inject.Inject
 
 @HiltViewModel
 class OrderHistoryViewModel @Inject constructor(
-    private val orderRepository: OrderRepository
+    private val orderRepository: OrderRepository,
+    private val cartRepository: CartRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(OrderHistoryUiState())
@@ -31,6 +33,24 @@ class OrderHistoryViewModel @Inject constructor(
             orderRepository.getLocalOrders().collect { orders ->
                 _uiState.update { it.copy(orders = orders, isLoading = false) }
             }
+        }
+    }
+
+    fun repeatOrder(orderId: String, onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            orderRepository.getOrderDetailsFromServer(orderId)
+                .onSuccess { response ->
+                    cartRepository.clearCart() // Очищаем старую корзину перед повтором
+                    response.items.forEach { item ->
+                        cartRepository.addQuantityToCart(item.productId, item.price, item.quantity)
+                    }
+                    _uiState.update { it.copy(isLoading = false) }
+                    onSuccess()
+                }
+                .onFailure {
+                    _uiState.update { it.copy(isLoading = false, error = "Ошибка загрузки заказа") }
+                }
         }
     }
 }
