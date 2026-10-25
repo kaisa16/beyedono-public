@@ -3,7 +3,7 @@ package ru.beyedono.app.ui.screen.settings
 
 data class SettingsUiState(
     val isPushEnabled: Boolean = true,
-    val isDarkTheme: Boolean = false,
+    val theme: String = "system", // "system", "light", "dark"
     val language: String = "Русский",
     val showPinDialog: Boolean = false,
     val pinInput: String = "",

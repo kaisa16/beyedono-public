@@ -6,6 +6,7 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,6 +22,7 @@ import ru.beyedono.app.data.remote.AdminApi
 import ru.beyedono.app.data.remote.ProductCreateRequest
 import ru.beyedono.app.data.repository.AdminRepository
 import ru.beyedono.app.data.repository.MenuRepository
+import ru.beyedono.app.util.NetworkUtils
 import java.io.File
 import javax.inject.Inject
 
@@ -28,7 +30,8 @@ import javax.inject.Inject
 class AdminMenuViewModel @Inject constructor(
     private val adminRepository: AdminRepository,
     private val menuRepository: MenuRepository,
-    private val adminApi: AdminApi
+    private val adminApi: AdminApi,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AdminMenuUiState())
@@ -58,18 +61,29 @@ class AdminMenuViewModel @Inject constructor(
     fun closeDialog() = _uiState.update { it.copy(showDialog = false) }
 
     fun addCategory(name: String) {
+        if (!NetworkUtils.isNetworkAvailable(context)) { _uiState.update { it.copy(error = "Нет сети") }; return }
         viewModelScope.launch { adminRepository.addCategory(name).onSuccess { loadData() }.onFailure { err -> _uiState.update { it.copy(error = err.message) } } }
     }
 
     fun renameCategory(oldName: String, newName: String) {
+        if (!NetworkUtils.isNetworkAvailable(context)) { _uiState.update { it.copy(error = "Нет сети") }; return }
         viewModelScope.launch { adminRepository.renameCategory(oldName, newName).onSuccess { loadData() }.onFailure { err -> _uiState.update { it.copy(error = err.message) } } }
     }
 
     fun deleteCategory(name: String) {
-        viewModelScope.launch { adminRepository.deleteCategory(name).onSuccess { loadData() }.onFailure { err -> _uiState.update { it.copy(error = err.message) } } }
+        if (!NetworkUtils.isNetworkAvailable(context)) {
+            _uiState.update { it.copy(error = "Нет подключения к интернету") }
+            return
+        }
+        viewModelScope.launch {
+            adminRepository.deleteCategory(name)
+                .onSuccess { loadData() }
+                .onFailure { err -> _uiState.update { it.copy(error = err.message) } }
+        }
     }
 
     fun uploadImage(uri: Uri, context: Context, onSuccess: (String) -> Unit) {
+        if (!NetworkUtils.isNetworkAvailable(context)) { _uiState.update { it.copy(error = "Нет сети") }; return }
         viewModelScope.launch {
             _uiState.update { it.copy(isUploading = true, error = null) }
             try {
@@ -87,6 +101,7 @@ class AdminMenuViewModel @Inject constructor(
     }
 
     fun saveProduct(name: String, category: String, price: Double, description: String, imageUrl: String, isSpicy: Boolean, isVegetarian: Boolean) {
+        if (!NetworkUtils.isNetworkAvailable(context)) { _uiState.update { it.copy(error = "Нет сети") }; return }
         viewModelScope.launch {
             val request = ProductCreateRequest(
                 category_id = category.ifBlank { "Разное" },
@@ -99,12 +114,12 @@ class AdminMenuViewModel @Inject constructor(
             )
             val editing = _uiState.value.editingProduct
             val result = if (editing == null) adminRepository.addProduct(request) else adminRepository.updateProduct(editing.id, request)
-            
             result.onSuccess { closeDialog(); loadData() }.onFailure { err -> _uiState.update { it.copy(error = err.message) } }
         }
     }
 
     fun deleteProduct(productId: String) {
+        if (!NetworkUtils.isNetworkAvailable(context)) { _uiState.update { it.copy(error = "Нет сети") }; return }
         viewModelScope.launch { adminRepository.deleteProduct(productId); loadData() }
     }
 }

@@ -3,8 +3,8 @@ package ru.beyedono.app.data.repository
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -14,15 +14,15 @@ import javax.inject.Singleton
 class SettingsRepository @Inject constructor(
     private val dataStore: DataStore<Preferences>
 ) {
-    private val DARK_THEME_KEY = booleanPreferencesKey("is_dark_theme")
+    private val THEME_KEY = stringPreferencesKey("app_theme")
 
-    val isDarkTheme: Flow<Boolean> = dataStore.data.map { prefs ->
-        prefs[DARK_THEME_KEY] ?: false
+    val theme: Flow<String> = dataStore.data.map { prefs ->
+        prefs[THEME_KEY] ?: "system"
     }
 
-    suspend fun setDarkTheme(enabled: Boolean) {
+    suspend fun setTheme(theme: String) {
         dataStore.edit { prefs ->
-            prefs[DARK_THEME_KEY] = enabled
+            prefs[THEME_KEY] = theme
         }
     }
 }

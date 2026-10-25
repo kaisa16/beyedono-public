@@ -24,18 +24,18 @@ class SettingsViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            settingsRepository.isDarkTheme.collect { isDark ->
-                _uiState.update { it.copy(isDarkTheme = isDark) }
+            settingsRepository.theme.collect { theme ->
+                _uiState.update { it.copy(theme = theme) }
             }
         }
     }
 
     fun togglePush(enabled: Boolean) = _uiState.update { it.copy(isPushEnabled = enabled) }
     
-    fun toggleDarkTheme(enabled: Boolean) {
-        _uiState.update { it.copy(isDarkTheme = enabled) }
+    fun setTheme(theme: String) {
+        _uiState.update { it.copy(theme = theme) }
         viewModelScope.launch {
-            settingsRepository.setDarkTheme(enabled)
+            settingsRepository.setTheme(theme)
         }
     }
     
