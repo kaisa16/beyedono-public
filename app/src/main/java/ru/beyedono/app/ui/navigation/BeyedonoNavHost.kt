@@ -11,6 +11,7 @@ import androidx.navigation.navArgument
 import ru.beyedono.app.ui.screen.about.AboutCafeScreen
 import ru.beyedono.app.ui.screen.addresses.AddressListScreen
 import ru.beyedono.app.ui.screen.admin.AdminOrdersScreen
+import ru.beyedono.app.ui.screen.admin_menu.AdminMenuScreen
 import ru.beyedono.app.ui.screen.auth.ForgotPasswordScreen
 import ru.beyedono.app.ui.screen.auth.LoginScreen
 import ru.beyedono.app.ui.screen.auth.RegisterScreen
@@ -31,16 +32,13 @@ import ru.beyedono.app.ui.screen.splash.SplashScreen
 @Composable
 fun BeyedonoNavHost(navController: NavHostController = rememberNavController()) {
     
-    // УМНАЯ ПРОВЕРКА: Ищем "checkout" во всем стеке навигации
     val onAuthSuccess = {
         val isFromCheckout = navController.currentBackStack.value.any { 
             it.destination.route?.startsWith("checkout") == true 
         }
         if (isFromCheckout) {
-            // Возвращаемся ровно на экран оформления
             navController.popBackStack(Routes.CHECKOUT, false)
         } else {
-            // Обычный вход -> в меню
             navController.navigate(Routes.MENU) { popUpTo(Routes.LOGIN) { inclusive = true } }
         }
     }
@@ -131,7 +129,19 @@ fun BeyedonoNavHost(navController: NavHostController = rememberNavController()) 
         composable(Routes.SETTINGS) {
             SettingsScreen(onNavigateBack = { navController.popBackStack() }, onNavigateToAdmin = { navController.navigate(Routes.ADMIN_ORDERS) })
         }
-        composable(Routes.ADMIN_ORDERS) { AdminOrdersScreen(onNavigateBack = { navController.popBackStack() }) }
+        
+        composable(Routes.ADMIN_ORDERS) { 
+            AdminOrdersScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToMenu = { navController.navigate(Routes.ADMIN_MENU) } // <--- ПЕРЕХОД
+            ) 
+        }
+        
+        // НОВЫЙ МАРШРУТ ДЛЯ МЕНЮ АДМИНА
+        composable(Routes.ADMIN_MENU) {
+            AdminMenuScreen(onNavigateBack = { navController.popBackStack() })
+        }
+        
         composable(Routes.MY_ADDRESSES) { AddressListScreen(onNavigateBack = { navController.popBackStack() }) }
         composable(Routes.ABOUT_CAFE) { AboutCafeScreen(onNavigateBack = { navController.popBackStack() }) }
         composable(Routes.FAVORITES) {

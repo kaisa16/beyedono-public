@@ -18,6 +18,7 @@ object Routes {
     const val PROFILE = "profile"
     const val SETTINGS = "settings"
     const val ADMIN_ORDERS = "admin_orders"
+    const val ADMIN_MENU = "admin_menu"
     const val MY_ADDRESSES = "my_addresses"
     const val ABOUT_CAFE = "about_cafe"
     const val FAVORITES = "favorites"

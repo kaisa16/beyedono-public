@@ -38,7 +38,6 @@ object NetworkModule {
             .build()
     }
 
-    // Твой основной сервер
     @Provides
     @Singleton
     @Named("main_api")
@@ -51,7 +50,6 @@ object NetworkModule {
             .build()
     }
 
-    // Геокодер OSM
     @Provides
     @Singleton
     @Named("geocoder_api")
@@ -87,4 +85,8 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideGeocoderApi(@Named("geocoder_api") retrofit: Retrofit): GeocoderApi = retrofit.create(GeocoderApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideAdminApi(@Named("main_api") retrofit: Retrofit): AdminApi = retrofit.create(AdminApi::class.java)
 }
