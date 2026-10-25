@@ -29,10 +29,19 @@ import java.util.Locale
 fun OrderHistoryScreen(
     onNavigateBack: () -> Unit,
     onOrderClick: (String) -> Unit,
-    onGoToCart: () -> Unit, // <--- НОВЫЙ ПАРАМЕТР
+    onGoToCart: () -> Unit,
     viewModel: OrderHistoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Показываем уведомление, если есть warningMessage
+    LaunchedEffect(uiState.warningMessage) {
+        uiState.warningMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearWarning()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -42,7 +51,8 @@ fun OrderHistoryScreen(
                     IconButton(onClick = onNavigateBack) { Icon(Icons.Default.ArrowBack, contentDescription = "Назад") }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) } // <--- ДОБАВЛЕНО
     ) { paddingValues ->
         if (uiState.isLoading) {
             Column(modifier = Modifier.fillMaxSize().padding(paddingValues), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -102,11 +112,7 @@ fun OrderHistoryScreen(
                                     
                                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                         Button(
-                                            onClick = { 
-                                                viewModel.repeatOrder(order.id) {
-                                                    onGoToCart()
-                                                }
-                                            }, 
+                                            onClick = { viewModel.repeatOrder(order.id) { onGoToCart() } }, 
                                             modifier = Modifier.weight(1f)
                                         ) {
                                             Text("Повторить заказ")

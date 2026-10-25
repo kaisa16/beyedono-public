@@ -5,10 +5,12 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ru.beyedono.app.data.local.dao.AddressDao
@@ -20,6 +22,7 @@ import ru.beyedono.app.data.repository.OrderRepository
 import java.util.UUID
 import javax.inject.Inject
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class CheckoutViewModel @Inject constructor(
     private val cartRepository: CartRepository,
@@ -30,17 +33,15 @@ class CheckoutViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val initialDiscount = savedStateHandle.get<String>("discount")?.toDoubleOrNull() ?: 0.0
+    private val initialPromoCode = savedStateHandle.get<String>("promoCode") ?: ""
 
-    private val _uiState = MutableStateFlow(CheckoutUiState(discount = initialDiscount))
+    private val _uiState = MutableStateFlow(CheckoutUiState(promoCode = initialPromoCode))
     val uiState: StateFlow<CheckoutUiState> = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {
             savedStateHandle.getStateFlow("picked_address", "").collect { address ->
-                if (address.isNotBlank()) {
-                    _uiState.update { it.copy(street = address) }
-                }
+                if (address.isNotBlank()) _uiState.update { it.copy(street = address) }
             }
         }
 
@@ -48,18 +49,21 @@ class CheckoutViewModel @Inject constructor(
             cartRepository.getCartItems().collect { items ->
                 val subtotal = items.sumOf { it.totalPrice }
                 val delivery = if (subtotal >= 1500 || subtotal == 0.0) 0.0 else 200.0
+                val discount = if (initialPromoCode == "BEYEDONO") subtotal * 0.10 else 0.0
+                
                 _uiState.update {
-                    it.copy(cartItems = items, subtotal = subtotal, deliveryPrice = delivery, total = subtotal + delivery - initialDiscount)
+                    it.copy(cartItems = items, subtotal = subtotal, deliveryPrice = delivery, discount = discount, total = subtotal + delivery - discount)
                 }
             }
         }
         
+        // СЛЕДИМ ЗА ПОЛЬЗОВАТЕЛЕМ В РЕАЛЬНОМ ВРЕМЕНИ
         viewModelScope.launch {
-            val user = userDao.getUser().first()
-            val userId = user?.id ?: "guest"
-            _uiState.update { it.copy(isGuest = user == null) } // <--- ПРОВЕРКА НА ГОСТЯ
-            
-            addressDao.getAddressesByUser(userId).collect { saved ->
+            userDao.getUser().flatMapLatest { user ->
+                val userId = user?.id ?: "guest"
+                _uiState.update { it.copy(isGuest = user == null) }
+                addressDao.getAddressesByUser(userId)
+            }.collect { saved ->
                 val uniqueAddresses = saved.distinctBy { "${it.street}_${it.house}_${it.apartment}" }
                 _uiState.update { it.copy(savedAddresses = uniqueAddresses) }
             }
@@ -78,21 +82,9 @@ class CheckoutViewModel @Inject constructor(
 
     fun placeOrder() {
         val state = _uiState.value
-        
-        if (state.isGuest) {
-            _uiState.update { it.copy(error = "Войдите в аккаунт, чтобы сделать заказ") }
-            return
-        }
-
-        if (state.cartItems.isEmpty()) {
-            _uiState.update { it.copy(error = "Корзина пуста") }
-            return
-        }
-
-        if (state.street.isBlank() || state.house.isBlank()) {
-            _uiState.update { it.copy(error = "Заполните улицу и дом") }
-            return
-        }
+        if (state.isGuest) { _uiState.update { it.copy(error = "Войдите в аккаунт") }; return }
+        if (state.cartItems.isEmpty()) { _uiState.update { it.copy(error = "Корзина пуста") }; return }
+        if (state.street.isBlank() || state.house.isBlank()) { _uiState.update { it.copy(error = "Заполните улицу и дом") }; return }
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
@@ -100,17 +92,11 @@ class CheckoutViewModel @Inject constructor(
             val userId = user?.id ?: "guest"
             val userEmail = user?.email
             
-            val existingAddress = state.savedAddresses.find { 
-                it.street == state.street && it.house == state.house && (it.apartment ?: "") == state.apartment 
-            }
-            
+            val existingAddress = state.savedAddresses.find { it.street == state.street && it.house == state.house && (it.apartment ?: "") == state.apartment }
             val addressId = existingAddress?.id ?: UUID.randomUUID().toString()
             
             if (existingAddress == null) {
-                val address = AddressEntity(
-                    id = addressId, userId = userId, city = state.city, street = state.street, house = state.house,
-                    apartment = state.apartment, entrance = null, floor = null, intercom = null, lat = null, lng = null, isDefault = false
-                )
+                val address = AddressEntity(id = addressId, userId = userId, city = state.city, street = state.street, house = state.house, apartment = state.apartment, entrance = null, floor = null, intercom = null, lat = null, lng = null, isDefault = false)
                 addressRepository.saveAddress(address)
             }
 
@@ -118,15 +104,8 @@ class CheckoutViewModel @Inject constructor(
             val fullAddress = "${state.street}, д. ${state.house}" + (if (state.apartment.isNotBlank()) ", кв. ${state.apartment}" else "")
             
             val result = orderRepository.createOrder(
-                addressId = addressId,
-                addressText = fullAddress,
-                items = items,
-                note = state.note,
-                paymentMethod = state.paymentMethod,
-                discount = state.discount,
-                deliveryPrice = state.deliveryPrice,
-                userEmail = userEmail,
-                promoCode = state.promoCode
+                addressId = addressId, addressText = fullAddress, items = items, note = state.note, paymentMethod = state.paymentMethod,
+                discount = state.discount, deliveryPrice = state.deliveryPrice, userEmail = userEmail, promoCode = state.promoCode
             )
 
             result.onSuccess { orderId ->

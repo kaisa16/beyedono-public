@@ -42,12 +42,18 @@ class OrderHistoryViewModel @Inject constructor(
         }
     }
 
+    fun clearWarning() {
+        _uiState.update { it.copy(warningMessage = null) }
+    }
+
     fun repeatOrder(orderId: String, onSuccess: () -> Unit) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             orderRepository.getOrderDetailsFromServer(orderId)
                 .onSuccess { response ->
                     cartRepository.clearCart()
+                    val missingProducts = mutableListOf<String>()
+                    
                     response.items.forEach { item ->
                         val currentProduct = productDao.getProductById(item.productId)
                         if (currentProduct != null) {
@@ -56,9 +62,16 @@ class OrderHistoryViewModel @Inject constructor(
                                 price = currentProduct.price,
                                 quantity = item.quantity
                             )
+                        } else {
+                            missingProducts.add(item.name)
                         }
                     }
-                    _uiState.update { it.copy(isLoading = false) }
+                    
+                    val warning = if (missingProducts.isNotEmpty()) {
+                        "Некоторые блюда недоступны: ${missingProducts.joinToString(", ")}"
+                    } else null
+
+                    _uiState.update { it.copy(isLoading = false, warningMessage = warning) }
                     onSuccess()
                 }
                 .onFailure {

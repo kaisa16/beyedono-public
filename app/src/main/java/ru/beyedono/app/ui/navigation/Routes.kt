@@ -10,7 +10,7 @@ object Routes {
     const val MENU = "menu"
     const val PRODUCT_DETAIL = "product_detail/{productId}"
     const val CART = "cart"
-    const val CHECKOUT = "checkout?discount={discount}"
+    const val CHECKOUT = "checkout?promoCode={promoCode}"
     const val ADDRESS_PICKER = "address_picker"
     const val PAYMENT = "payment/{orderId}"
     const val ORDER_STATUS = "order_status/{orderId}"
@@ -25,5 +25,5 @@ object Routes {
     fun productDetail(productId: String) = "product_detail/$productId"
     fun payment(orderId: String) = "payment/$orderId"
     fun orderStatus(orderId: String) = "order_status/$orderId"
-    fun checkout(discount: Double) = "checkout?discount=$discount"
+    fun checkout(promoCode: String) = "checkout?promoCode=$promoCode"
 }

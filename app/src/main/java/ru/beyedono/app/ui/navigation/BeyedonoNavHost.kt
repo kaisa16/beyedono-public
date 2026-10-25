@@ -30,6 +30,21 @@ import ru.beyedono.app.ui.screen.splash.SplashScreen
 
 @Composable
 fun BeyedonoNavHost(navController: NavHostController = rememberNavController()) {
+    
+    // УМНАЯ ПРОВЕРКА: Ищем "checkout" во всем стеке навигации
+    val onAuthSuccess = {
+        val isFromCheckout = navController.currentBackStack.value.any { 
+            it.destination.route?.startsWith("checkout") == true 
+        }
+        if (isFromCheckout) {
+            // Возвращаемся ровно на экран оформления
+            navController.popBackStack(Routes.CHECKOUT, false)
+        } else {
+            // Обычный вход -> в меню
+            navController.navigate(Routes.MENU) { popUpTo(Routes.LOGIN) { inclusive = true } }
+        }
+    }
+
     NavHost(navController = navController, startDestination = Routes.SPLASH) {
         composable(Routes.SPLASH) {
             SplashScreen(
@@ -42,11 +57,14 @@ fun BeyedonoNavHost(navController: NavHostController = rememberNavController()) 
             LoginScreen(
                 onNavigateToRegister = { navController.navigate(Routes.REGISTER) },
                 onNavigateToForgotPassword = { navController.navigate(Routes.FORGOT_PASSWORD) },
-                onLoginSuccess = { navController.navigate(Routes.MENU) { popUpTo(Routes.LOGIN) { inclusive = true } } }
+                onLoginSuccess = { onAuthSuccess() }
             )
         }
         composable(Routes.REGISTER) {
-            RegisterScreen(onNavigateToLogin = { navController.popBackStack() }, onRegisterSuccess = { navController.navigate(Routes.MENU) { popUpTo(Routes.LOGIN) { inclusive = true } } })
+            RegisterScreen(
+                onNavigateToLogin = { navController.popBackStack() }, 
+                onRegisterSuccess = { onAuthSuccess() }
+            )
         }
         composable(Routes.FORGOT_PASSWORD) { ForgotPasswordScreen(onNavigateBack = { navController.popBackStack() }) }
         composable(Routes.MENU) {
@@ -56,13 +74,19 @@ fun BeyedonoNavHost(navController: NavHostController = rememberNavController()) 
             ProductDetailScreen(onNavigateBack = { navController.popBackStack() }, onCartClick = { navController.navigate(Routes.CART) })
         }
         composable(Routes.CART) {
-            CartScreen(onNavigateBack = { navController.popBackStack() }, onCheckoutClick = { discount -> navController.navigate(Routes.checkout(discount)) })
+            CartScreen(
+                onNavigateBack = { navController.popBackStack() }, 
+                onCheckoutClick = { promoCode -> navController.navigate(Routes.checkout(promoCode)) }
+            )
         }
-        composable(route = Routes.CHECKOUT, arguments = listOf(navArgument("discount") { type = NavType.StringType })) {
+        composable(
+            route = Routes.CHECKOUT,
+            arguments = listOf(navArgument("promoCode") { type = NavType.StringType; defaultValue = "" })
+        ) {
             CheckoutScreen(
                 onNavigateBack = { navController.popBackStack() }, 
                 onNavigateToMap = { navController.navigate(Routes.ADDRESS_PICKER) },
-                onNavigateToLogin = { navController.navigate(Routes.LOGIN) { popUpTo(Routes.MENU) } }, // <--- ПЕРЕХОД НА ЛОГИН
+                onNavigateToLogin = { navController.navigate(Routes.LOGIN) },
                 onOrderPlaced = { orderId -> navController.navigate(Routes.payment(orderId)) { popUpTo(Routes.MENU) { inclusive = false } } }
             )
         }
@@ -79,7 +103,6 @@ fun BeyedonoNavHost(navController: NavHostController = rememberNavController()) 
         }
         composable(route = Routes.PAYMENT, arguments = listOf(navArgument("orderId") { type = NavType.StringType })) {
             PaymentScreen(
-                // Если нажмут "Назад" на оплате - кидаем в меню, чтобы не было пустой корзины
                 onNavigateBack = { navController.navigate(Routes.MENU) { popUpTo(Routes.MENU) { inclusive = true } } }, 
                 onPaymentSuccess = { orderId -> navController.navigate(Routes.orderStatus(orderId)) { popUpTo(Routes.MENU) { inclusive = false } } }
             )

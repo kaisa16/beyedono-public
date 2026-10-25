@@ -6,5 +6,6 @@ import ru.beyedono.app.data.local.entity.OrderEntity
 data class OrderHistoryUiState(
     val orders: List<OrderEntity> = emptyList(),
     val isLoading: Boolean = true,
-    val error: String? = null
+    val error: String? = null,
+    val warningMessage: String? = null // <--- НОВОЕ ПОЛЕ ДЛЯ СООБЩЕНИЙ
 )

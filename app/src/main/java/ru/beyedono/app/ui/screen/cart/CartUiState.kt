@@ -7,9 +7,10 @@ data class CartUiState(
     val items: List<CartItem> = emptyList(),
     val subtotal: Double = 0.0,
     val deliveryPrice: Double = 0.0,
-    val total: Double = 0.0,
-    val promoCode: String = "",
     val discount: Double = 0.0,
+    val promoCode: String = "", // То, что вводит юзер
+    val appliedPromoCode: String = "", // <--- ТО, ЧТО ПРИМЕНИЛОСЬ
+    val total: Double = 0.0,
     val isLoading: Boolean = false,
     val error: String? = null
 )

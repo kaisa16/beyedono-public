@@ -5,6 +5,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
 import ru.beyedono.app.data.local.entity.OrderEntity
 
@@ -24,4 +25,11 @@ interface OrderDao {
 
     @Query("DELETE FROM orders")
     suspend fun clearOrders()
+
+    // ТРАНЗАКЦИЯ: Удаляет старые и вставляет новые за 1 раз
+    @Transaction
+    suspend fun replaceAllOrders(orders: List<OrderEntity>) {
+        clearOrders()
+        insertOrders(orders)
+    }
 }

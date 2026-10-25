@@ -5,12 +5,16 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import ru.beyedono.app.data.local.dao.OrderDao
+import ru.beyedono.app.data.local.dao.UserDao
 import ru.beyedono.app.data.repository.OrderRepository
 import javax.inject.Inject
 
@@ -18,6 +22,7 @@ import javax.inject.Inject
 class OrderStatusViewModel @Inject constructor(
     private val orderDao: OrderDao,
     private val orderRepository: OrderRepository,
+    private val userDao: UserDao, // <--- ДОБАВЛЕНО
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -28,6 +33,7 @@ class OrderStatusViewModel @Inject constructor(
 
     init {
         loadOrder()
+        startAutoRefresh() // <--- ЗАПУСКАЕМ ОБНОВЛЕНИЕ
     }
 
     private fun loadOrder() {
@@ -38,6 +44,17 @@ class OrderStatusViewModel @Inject constructor(
                 } else {
                     _uiState.update { it.copy(isLoading = false, error = "Заказ не найден") }
                 }
+            }
+        }
+    }
+
+    // ФОНОВОЕ ОБНОВЛЕНИЕ КАЖДЫЕ 15 СЕКУНД
+    private fun startAutoRefresh() {
+        viewModelScope.launch {
+            while (isActive) {
+                delay(15_000) // 15 секунд
+                val user = userDao.getUser().first()
+                orderRepository.syncOrders(userEmail = user?.email, isAdmin = false)
             }
         }
     }
