@@ -14,7 +14,8 @@ data class CreateOrderRequest(
     @SerialName("payment_method") val paymentMethod: String,
     val discount: Double = 0.0,
     @SerialName("delivery_price") val deliveryPrice: Double = 0.0,
-    @SerialName("user_email") val userEmail: String? = null
+    @SerialName("user_email") val userEmail: String? = null,
+    @SerialName("promo_code") val promoCode: String? = null
 )
 
 @Serializable
@@ -40,7 +41,7 @@ data class OrderResponse(
     val discount: Double,
     val note: String? = null,
     @SerialName("admin_note") val adminNote: String? = null,
-    @SerialName("payment_method") val paymentMethod: String, // <--- ДОБАВЛЕНО
+    @SerialName("payment_method") val paymentMethod: String,
     @SerialName("created_at") val createdAt: String,
     @SerialName("delivery_time") val deliveryTime: String? = null,
     val items: List<OrderItemDto>

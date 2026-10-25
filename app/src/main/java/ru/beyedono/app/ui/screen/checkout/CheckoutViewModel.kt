@@ -58,7 +58,6 @@ class CheckoutViewModel @Inject constructor(
             val user = userDao.getUser().first()
             val userId = user?.id ?: "guest"
             addressDao.getAddressesByUser(userId).collect { saved ->
-                // Убираем дубликаты для отображения
                 val uniqueAddresses = saved.distinctBy { "${it.street}_${it.house}_${it.apartment}" }
                 _uiState.update { it.copy(savedAddresses = uniqueAddresses) }
             }
@@ -78,7 +77,6 @@ class CheckoutViewModel @Inject constructor(
     fun placeOrder() {
         val state = _uiState.value
         
-        // ЗАЩИТА ОТ ПУСТОГО ЗАКАЗА
         if (state.cartItems.isEmpty()) {
             _uiState.update { it.copy(error = "Корзина пуста. Добавьте товары.") }
             return
@@ -95,7 +93,6 @@ class CheckoutViewModel @Inject constructor(
             val userId = user?.id ?: "guest"
             val userEmail = user?.email
             
-            // ПРОВЕРКА НА ДУБЛИКАТ
             val existingAddress = state.savedAddresses.find { 
                 it.street == state.street && it.house == state.house && (it.apartment ?: "") == state.apartment 
             }
@@ -121,7 +118,8 @@ class CheckoutViewModel @Inject constructor(
                 paymentMethod = state.paymentMethod,
                 discount = state.discount,
                 deliveryPrice = state.deliveryPrice,
-                userEmail = userEmail
+                userEmail = userEmail,
+                promoCode = state.promoCode // <--- ПЕРЕДАЕМ ПРОМОКОД НА СЕРВЕР
             )
 
             result.onSuccess { orderId ->

@@ -7,9 +7,11 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import ru.beyedono.app.data.local.dao.ProductDao
+import ru.beyedono.app.data.local.dao.UserDao
 import ru.beyedono.app.data.repository.CartRepository
 import ru.beyedono.app.data.repository.OrderRepository
 import javax.inject.Inject
@@ -18,7 +20,8 @@ import javax.inject.Inject
 class OrderHistoryViewModel @Inject constructor(
     private val orderRepository: OrderRepository,
     private val cartRepository: CartRepository,
-    private val productDao: ProductDao // <--- ДОБАВЛЕНО ДЛЯ ЦЕН
+    private val productDao: ProductDao,
+    private val userDao: UserDao
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(OrderHistoryUiState())
@@ -31,7 +34,8 @@ class OrderHistoryViewModel @Inject constructor(
     fun loadOrders() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            orderRepository.syncOrders()
+            val user = userDao.getUser().first()
+            orderRepository.syncOrders(userEmail = user?.email, isAdmin = false)
             orderRepository.getLocalOrders().collect { orders ->
                 _uiState.update { it.copy(orders = orders, isLoading = false) }
             }
@@ -43,15 +47,13 @@ class OrderHistoryViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true) }
             orderRepository.getOrderDetailsFromServer(orderId)
                 .onSuccess { response ->
-                    cartRepository.clearCart() 
-                    
+                    cartRepository.clearCart()
                     response.items.forEach { item ->
-                        // БЕРЕМ АКТУАЛЬНУЮ ЦЕНУ ИЗ БАЗЫ
                         val currentProduct = productDao.getProductById(item.productId)
                         if (currentProduct != null) {
                             cartRepository.addQuantityToCart(
-                                productId = currentProduct.id, 
-                                price = currentProduct.price, // Актуальная цена
+                                productId = currentProduct.id,
+                                price = currentProduct.price,
                                 quantity = item.quantity
                             )
                         }

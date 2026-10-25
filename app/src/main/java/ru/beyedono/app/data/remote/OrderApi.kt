@@ -6,6 +6,7 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
+import retrofit2.http.Query
 import ru.beyedono.app.data.remote.dto.CreateOrderRequest
 import ru.beyedono.app.data.remote.dto.OrderResponse
 import ru.beyedono.app.data.remote.dto.StatusUpdateRequest
@@ -15,7 +16,10 @@ interface OrderApi {
     suspend fun createOrder(@Body request: CreateOrderRequest): OrderResponse
 
     @GET("orders")
-    suspend fun getOrders(): List<OrderResponse>
+    suspend fun getOrders(
+        @Query("user_email") userEmail: String? = null,
+        @Query("is_admin") isAdmin: Boolean = false
+    ): List<OrderResponse>
 
     @GET("orders/{id}")
     suspend fun getOrderById(@Path("id") id: String): OrderResponse

@@ -4,6 +4,9 @@ package ru.beyedono.app.data.repository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.tasks.await
+import ru.beyedono.app.data.local.dao.AddressDao
+import ru.beyedono.app.data.local.dao.CartDao
+import ru.beyedono.app.data.local.dao.OrderDao
 import ru.beyedono.app.data.local.dao.UserDao
 import ru.beyedono.app.data.local.entity.UserEntity
 import ru.beyedono.app.data.remote.AuthApi
@@ -15,6 +18,10 @@ import javax.inject.Singleton
 class AuthRepository @Inject constructor(
     private val authApi: AuthApi,
     private val userDao: UserDao,
+    private val cartDao: CartDao,
+    private val orderDao: OrderDao,
+    private val addressDao: AddressDao,
+    private val favoritesRepository: FavoritesRepository,
     private val firebaseAuth: FirebaseAuth
 ) {
     suspend fun login(email: String, password: String): Result<Unit> = runCatching {
@@ -26,7 +33,7 @@ class AuthRepository @Inject constructor(
             email = email, phone = null, avatarUrl = null, createdAt = System.currentTimeMillis()
         )
         userDao.insertUser(user)
-        updateFcmToken(email) 
+        updateFcmToken(email)
     }
 
     suspend fun register(name: String, email: String, password: String): Result<Unit> = runCatching {
@@ -41,21 +48,27 @@ class AuthRepository @Inject constructor(
         updateFcmToken(email)
     }
 
-    // Теперь, если получение токена упадет с ошибкой, 
-    // мы увидим её на экране телефона!
     suspend fun updateFcmToken(email: String) {
-        val token = FirebaseMessaging.getInstance().token.await()
-        authApi.saveFcmToken(FcmTokenRequest(email, token))
+        try {
+            val token = FirebaseMessaging.getInstance().token.await()
+            authApi.saveFcmToken(FcmTokenRequest(email, token))
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     suspend fun logout() {
         firebaseAuth.signOut()
         userDao.clearUser()
+        cartDao.clearCart()
+        orderDao.clearOrders()
+        addressDao.clearAddresses()
+        favoritesRepository.clearFavorites()
     }
 
     suspend fun deleteAccount(): Result<Unit> = runCatching {
         val user = firebaseAuth.currentUser
         user?.delete()?.await()
-        userDao.clearUser()
+        logout()
     }
 }

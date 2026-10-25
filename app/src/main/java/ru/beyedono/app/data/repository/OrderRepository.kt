@@ -7,6 +7,7 @@ import ru.beyedono.app.data.local.entity.OrderEntity
 import ru.beyedono.app.data.remote.OrderApi
 import ru.beyedono.app.data.remote.dto.CreateOrderRequest
 import ru.beyedono.app.data.remote.dto.OrderItemRequest
+import ru.beyedono.app.data.remote.dto.OrderResponse
 import ru.beyedono.app.data.remote.dto.StatusUpdateRequest
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -28,7 +29,8 @@ class OrderRepository @Inject constructor(
         paymentMethod: String,
         discount: Double,
         deliveryPrice: Double,
-        userEmail: String?
+        userEmail: String?,
+        promoCode: String? = null
     ): Result<String> = runCatching {
         val request = CreateOrderRequest(
             addressId = addressId,
@@ -39,7 +41,8 @@ class OrderRepository @Inject constructor(
             paymentMethod = paymentMethod,
             discount = discount,
             deliveryPrice = deliveryPrice,
-            userEmail = userEmail
+            userEmail = userEmail,
+            promoCode = promoCode
         )
         val response = orderApi.createOrder(request)
         
@@ -66,8 +69,8 @@ class OrderRepository @Inject constructor(
         response.id
     }
 
-    suspend fun syncOrders(): Result<Unit> = runCatching {
-        val orders = orderApi.getOrders()
+    suspend fun syncOrders(userEmail: String? = null, isAdmin: Boolean = false): Result<Unit> = runCatching {
+        val orders = orderApi.getOrders(userEmail, isAdmin)
         val entities = orders.map {
             val timestamp = try {
                 if (it.createdAt.endsWith("Z")) {
@@ -114,8 +117,7 @@ class OrderRepository @Inject constructor(
         orderApi.payOrder(orderId)
     }
 
-    // НОВЫЙ МЕТОД ДЛЯ ПОЛУЧЕНИЯ ДЕТАЛЕЙ ЗАКАЗА (для повтора)
-    suspend fun getOrderDetailsFromServer(orderId: String): Result<ru.beyedono.app.data.remote.dto.OrderResponse> = runCatching {
+    suspend fun getOrderDetailsFromServer(orderId: String): Result<OrderResponse> = runCatching {
         orderApi.getOrderById(orderId)
     }
 }

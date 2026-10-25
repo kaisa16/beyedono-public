@@ -27,7 +27,7 @@ class AdminOrdersViewModel @Inject constructor(
     fun loadOrders() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            orderRepository.syncOrders()
+            orderRepository.syncOrders(userEmail = null, isAdmin = true)
             orderRepository.getLocalOrders().collect { orders ->
                 _uiState.update { it.copy(orders = orders, isLoading = false) }
             }
@@ -37,7 +37,7 @@ class AdminOrdersViewModel @Inject constructor(
     fun changeStatus(orderId: String, newStatus: String, adminNote: String? = null) {
         viewModelScope.launch {
             orderRepository.updateOrderStatus(orderId, newStatus, adminNote)
-            orderRepository.syncOrders()
+            orderRepository.syncOrders(userEmail = null, isAdmin = true)
         }
     }
 }

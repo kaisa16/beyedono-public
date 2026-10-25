@@ -23,12 +23,11 @@ class FavoritesRepository @Inject constructor(
     suspend fun toggleFavorite(productId: String) {
         dataStore.edit { prefs ->
             val current = prefs[FAVORITES_KEY] ?: emptySet()
-            val newValue = if (current.contains(productId)) {
-                current - productId
-            } else {
-                current + productId
-            }
-            prefs[FAVORITES_KEY] = newValue
+            prefs[FAVORITES_KEY] = if (current.contains(productId)) current - productId else current + productId
         }
+    }
+
+    suspend fun clearFavorites() {
+        dataStore.edit { it.remove(FAVORITES_KEY) }
     }
 }
