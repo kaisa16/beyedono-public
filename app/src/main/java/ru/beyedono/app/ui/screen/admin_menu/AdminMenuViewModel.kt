@@ -34,20 +34,19 @@ class AdminMenuViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(AdminMenuUiState())
     val uiState: StateFlow<AdminMenuUiState> = _uiState.asStateFlow()
 
-    init { loadProducts() }
+    init { loadData() }
 
-    private fun loadProducts() {
+    private fun loadData() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            menuRepository.syncMenu()
+            // Синхронизируем и получаем список категорий с сервера
+            val cats = menuRepository.syncMenu().getOrDefault(emptyList())
+            
             menuRepository.getLocalProducts().collect { prods ->
-                val cats = mutableListOf("Пиццы", "Роллы", "Основные блюда", "Салаты", "Фаст-Фуд", "Гамбургеры", "Напитки") 
-                cats.addAll(prods.map { it.categoryId })
-                
                 _uiState.update { 
                     it.copy(
                         products = prods, 
-                        availableCategories = cats.distinct().sorted(), 
+                        availableCategories = cats.ifEmpty { listOf("Разное") }, 
                         isLoading = false 
                     ) 
                 }
@@ -61,21 +60,25 @@ class AdminMenuViewModel @Inject constructor(
 
     fun addCategory(name: String) {
         viewModelScope.launch {
-            adminRepository.addCategory(name).onFailure { err -> _uiState.update { it.copy(error = err.message) } }
+            adminRepository.addCategory(name)
+                .onSuccess { loadData() } // Обновляем список после добавления
+                .onFailure { err -> _uiState.update { it.copy(error = err.message) } }
         }
     }
 
     fun renameCategory(oldName: String, newName: String) {
         viewModelScope.launch {
-            adminRepository.renameCategory(oldName, newName).onFailure { err -> _uiState.update { it.copy(error = err.message) } }
+            adminRepository.renameCategory(oldName, newName)
+                .onSuccess { loadData() } // Обновляем список
+                .onFailure { err -> _uiState.update { it.copy(error = err.message) } }
         }
     }
 
     fun deleteCategory(name: String) {
         viewModelScope.launch {
-            adminRepository.deleteCategory(name).onFailure { err ->
-                _uiState.update { it.copy(error = err.message) }
-            }
+            adminRepository.deleteCategory(name)
+                .onSuccess { loadData() } // Обновляем список
+                .onFailure { err -> _uiState.update { it.copy(error = err.message) } }
         }
     }
 
@@ -107,11 +110,20 @@ class AdminMenuViewModel @Inject constructor(
             )
             val editing = _uiState.value.editingProduct
             val result = if (editing == null) adminRepository.addProduct(request) else adminRepository.updateProduct(editing.id, request)
-            result.onSuccess { closeDialog() }.onFailure { err -> _uiState.update { it.copy(error = err.message) } }
+            
+            result.onSuccess { 
+                closeDialog()
+                loadData() // Обновляем список товаров
+            }.onFailure { err -> 
+                _uiState.update { it.copy(error = err.message) } 
+            }
         }
     }
 
     fun deleteProduct(productId: String) {
-        viewModelScope.launch { adminRepository.deleteProduct(productId) }
+        viewModelScope.launch { 
+            adminRepository.deleteProduct(productId)
+            loadData()
+        }
     }
 }

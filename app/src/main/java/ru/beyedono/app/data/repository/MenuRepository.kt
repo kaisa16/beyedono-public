@@ -15,22 +15,19 @@ class MenuRepository @Inject constructor(
 ) {
     fun getLocalProducts(): Flow<List<ProductEntity>> = productDao.getAllProducts()
 
-    suspend fun syncMenu(): Result<Unit> = runCatching {
+    // ТЕПЕРЬ ВОЗВРАЩАЕМ СПИСОК КАТЕГОРИЙ
+    suspend fun syncMenu(): Result<List<String>> = runCatching {
         val response = menuApi.getMenu()
         val entities = response.products.map {
             ProductEntity(
-                id = it.id,
-                categoryId = it.categoryId,
-                name = it.name,
-                description = it.description,
-                price = it.price,
-                imageUrl = it.imageUrl,
-                isAvailable = it.isAvailable,
-                isSpicy = it.isSpicy,
-                isVegetarian = it.isVegetarian
+                id = it.id, categoryId = it.categoryId, name = it.name, description = it.description,
+                price = it.price, imageUrl = it.imageUrl, isAvailable = it.isAvailable, isSpicy = it.isSpicy, isVegetarian = it.isVegetarian
             )
         }
         productDao.clearProducts()
         productDao.insertProducts(entities)
+        
+        // Возвращаем названия категорий
+        response.categories.map { it.name }
     }
 }
