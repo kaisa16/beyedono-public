@@ -17,8 +17,10 @@ data class OrderEntity(
     val discount: Double,
     val note: String?,
     val adminNote: String?,
-    val paymentMethod: String, // <--- НОВОЕ
-    val itemsSummary: String,  // <--- НОВОЕ (состав заказа текстом)
+    val paymentMethod: String,
+    val itemsSummary: String,
+    val userEmail: String? = null, // <--- ДОБАВЛЕНО
+    val userPhone: String? = null, // <--- ДОБАВЛЕНО
     val createdAt: Long,
     val deliveryTime: Long?
 )

@@ -85,11 +85,20 @@ fun AdminOrdersScreen(
                             }
                             Spacer(modifier = Modifier.height(8.dp))
                             
+                            // ВЫВОДИМ КЛИЕНТА
+                            if (!order.userEmail.isNullOrBlank()) {
+                                Text("Клиент: ${order.userEmail}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                            }
+                            if (!order.userPhone.isNullOrBlank()) {
+                                Text("Телефон: ${order.userPhone}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                            }
+                            
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text("Адрес: ${order.addressText ?: "Не указан"}", style = MaterialTheme.typography.bodyMedium)
                             Text("Оплата: ${if (order.paymentMethod == "SBP") "СБП / Карта" else "Наличными"}", style = MaterialTheme.typography.bodyMedium)
                             
                             Spacer(modifier = Modifier.height(4.dp))
-                            Text("Состав: ${order.itemsSummary}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                            Text("Состав: ${order.itemsSummary}", style = MaterialTheme.typography.bodyMedium)
                             Spacer(modifier = Modifier.height(4.dp))
                             
                             Text("Сумма: ${PriceFormatter.format(order.totalPrice)}")
@@ -98,7 +107,7 @@ fun AdminOrdersScreen(
                             }
                             
                             if (!order.note.isNullOrBlank()) {
-                                Text("Клиент: ${order.note}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.secondary)
+                                Text("Примечание клиента: ${order.note}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.secondary)
                             }
                             if (!order.adminNote.isNullOrBlank()) {
                                 Text("Ваше сообщение: ${order.adminNote}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
@@ -108,7 +117,6 @@ fun AdminOrdersScreen(
                             
                             Spacer(modifier = Modifier.height(12.dp))
                             
-                            // БЛОК КНОПОК СТАТУСА
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 if (statusEnum == OrderStatus.PENDING) {
                                     Button(onClick = { viewModel.changeStatus(order.id, "COOKING") }) { Text("Готовится") }
@@ -118,7 +126,6 @@ fun AdminOrdersScreen(
                                     Button(onClick = { viewModel.changeStatus(order.id, "DELIVERED") }) { Text("Доставлен") }
                                 }
                                 
-                                // КНОПКА ОТМЕНЫ ДЛЯ АДМИНА (Добавлена)
                                 if (statusEnum != OrderStatus.DELIVERED && statusEnum != OrderStatus.CANCELLED) {
                                     Button(
                                         onClick = { viewModel.changeStatus(order.id, "CANCELLED") },

@@ -42,6 +42,8 @@ data class OrderResponse(
     val note: String? = null,
     @SerialName("admin_note") val adminNote: String? = null,
     @SerialName("payment_method") val paymentMethod: String,
+    @SerialName("user_email") val userEmail: String? = null, // <--- ДОБАВЛЕНО
+    @SerialName("user_phone") val userPhone: String? = null, // <--- ДОБАВЛЕНО
     @SerialName("created_at") val createdAt: String,
     @SerialName("delivery_time") val deliveryTime: String? = null,
     val items: List<OrderItemDto>

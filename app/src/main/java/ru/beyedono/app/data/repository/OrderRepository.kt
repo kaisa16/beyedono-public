@@ -37,7 +37,8 @@ class OrderRepository @Inject constructor(
             id = response.id, userId = userEmail ?: "", addressId = addressId, addressText = response.addressText,
             isPaid = response.isPaid, status = response.status, totalPrice = response.totalPrice, deliveryPrice = response.deliveryPrice,
             discount = response.discount, note = response.note, adminNote = response.adminNote, paymentMethod = response.paymentMethod,
-            itemsSummary = itemsStr, createdAt = System.currentTimeMillis(), deliveryTime = null
+            itemsSummary = itemsStr, userEmail = response.userEmail, userPhone = response.userPhone,
+            createdAt = System.currentTimeMillis(), deliveryTime = null
         )
         orderDao.insertOrder(entity)
         response.id
@@ -56,11 +57,11 @@ class OrderRepository @Inject constructor(
             OrderEntity(
                 id = it.id, userId = "", addressId = null, addressText = it.addressText, isPaid = it.isPaid, status = it.status,
                 totalPrice = it.totalPrice, deliveryPrice = it.deliveryPrice, discount = it.discount, note = it.note, adminNote = it.adminNote,
-                paymentMethod = it.paymentMethod, itemsSummary = itemsStr, createdAt = timestamp, deliveryTime = null
+                paymentMethod = it.paymentMethod, itemsSummary = itemsStr, userEmail = it.userEmail, userPhone = it.userPhone,
+                createdAt = timestamp, deliveryTime = null
             )
         }
-        // ВЫЗЫВАЕМ ТРАНЗАКЦИЮ
-        orderDao.replaceAllOrders(entities) 
+        orderDao.replaceAllOrders(entities)
     }
 
     suspend fun updateOrderStatus(orderId: String, newStatus: String, adminNote: String? = null): Result<Unit> = runCatching {
