@@ -22,6 +22,7 @@ object Routes {
     const val MY_ADDRESSES = "my_addresses"
     const val ABOUT_CAFE = "about_cafe"
     const val FAVORITES = "favorites"
+    const val PRIVACY_POLICY = "privacy_policy"
 
     fun productDetail(productId: String) = "product_detail/$productId"
     fun payment(orderId: String) = "payment/$orderId"

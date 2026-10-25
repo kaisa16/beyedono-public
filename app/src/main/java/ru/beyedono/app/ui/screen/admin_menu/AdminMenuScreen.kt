@@ -31,28 +31,20 @@ fun AdminMenuScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     var showDeleteDialog by remember { mutableStateOf<String?>(null) }
-    
-    // Переменные для диалога управления категориями
     var showCatDialog by remember { mutableStateOf(false) }
     var catInput by remember { mutableStateOf("") }
     var editingCat by remember { mutableStateOf<String?>(null) }
 
-    // Диалог удаления ТОВАРА
     if (showDeleteDialog != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = null },
             title = { Text("Удалить товар?") },
             text = { Text("Вы уверены?") },
-            confirmButton = {
-                TextButton(onClick = { showDeleteDialog?.let { viewModel.deleteProduct(it) }; showDeleteDialog = null }) { 
-                    Text("Удалить", color = MaterialTheme.colorScheme.error) 
-                }
-            },
+            confirmButton = { TextButton(onClick = { showDeleteDialog?.let { viewModel.deleteProduct(it) }; showDeleteDialog = null }) { Text("Удалить", color = MaterialTheme.colorScheme.error) } },
             dismissButton = { TextButton(onClick = { showDeleteDialog = null }) { Text("Отмена") } }
         )
     }
 
-    // ДИАЛОГ УПРАВЛЕНИЯ КАТЕГОРИЯМИ
     if (showCatDialog) {
         AlertDialog(
             onDismissRequest = { showCatDialog = false; catInput = ""; editingCat = null },
@@ -60,52 +52,25 @@ fun AdminMenuScreen(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        OutlinedTextField(
-                            value = catInput, 
-                            onValueChange = { catInput = it }, 
-                            label = { Text(if (editingCat == null) "Новая категория" else "Новое имя") }, 
-                            modifier = Modifier.weight(1f)
-                        )
-                        IconButton(onClick = { 
-                            if (catInput.isNotBlank()) {
-                                if (editingCat == null) viewModel.addCategory(catInput) else viewModel.renameCategory(editingCat!!, catInput)
-                                catInput = ""
-                                editingCat = null
-                            }
-                        }) {
-                            Icon(Icons.Default.Check, contentDescription = "Сохранить", tint = MaterialTheme.colorScheme.primary)
-                        }
+                        OutlinedTextField(value = catInput, onValueChange = { catInput = it }, label = { Text(if (editingCat == null) "Новая" else "Новое имя") }, modifier = Modifier.weight(1f))
+                        IconButton(onClick = { if (catInput.isNotBlank()) { if (editingCat == null) viewModel.addCategory(catInput) else viewModel.renameCategory(editingCat!!, catInput); catInput = ""; editingCat = null } }) { Icon(Icons.Default.Check, "Сохранить", tint = MaterialTheme.colorScheme.primary) }
                     }
-                    
                     uiState.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
-                    
                     HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                    Text("Существующие категории:", style = MaterialTheme.typography.titleSmall)
-                    
                     LazyColumn(modifier = Modifier.heightIn(max = 300.dp)) {
                         items(uiState.availableCategories) { cat ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
+                            Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                                 Text(cat, style = MaterialTheme.typography.bodyMedium)
                                 Row {
-                                    IconButton(onClick = { editingCat = cat; catInput = cat }) {
-                                        Icon(Icons.Default.Edit, contentDescription = "Переименовать", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-                                    }
-                                    IconButton(onClick = { viewModel.deleteCategory(cat) }) {
-                                        Icon(Icons.Default.Delete, contentDescription = "Удалить", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(20.dp))
-                                    }
+                                    IconButton(onClick = { editingCat = cat; catInput = cat }) { Icon(Icons.Default.Edit, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp)) }
+                                    IconButton(onClick = { viewModel.deleteCategory(cat) }) { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(20.dp)) }
                                 }
                             }
                         }
                     }
                 }
             },
-            confirmButton = {
-                TextButton(onClick = { showCatDialog = false; catInput = ""; editingCat = null }) { Text("Закрыть") }
-            }
+            confirmButton = { TextButton(onClick = { showCatDialog = false; catInput = ""; editingCat = null }) { Text("Закрыть") } }
         )
     }
 
@@ -114,22 +79,17 @@ fun AdminMenuScreen(
             TopAppBar(
                 title = { Text("Управление меню") },
                 navigationIcon = { IconButton(onClick = onNavigateBack) { Icon(Icons.Default.ArrowBack, null) } },
-                actions = {
-                    IconButton(onClick = { showCatDialog = true }) {
-                        Icon(Icons.Default.List, contentDescription = "Категории")
-                    }
-                }
+                actions = { IconButton(onClick = { showCatDialog = true }) { Icon(Icons.Default.List, "Категории") } }
             )
         },
-        floatingActionButton = {
-            FloatingActionButton(onClick = { viewModel.openAddDialog() }) { Icon(Icons.Default.Add, null) }
-        }
+        floatingActionButton = { FloatingActionButton(onClick = { viewModel.openAddDialog() }) { Icon(Icons.Default.Add, null) } }
     ) { paddingValues ->
         if (uiState.isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
         } else {
             LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp),
+                modifier = Modifier.fillMaxSize().padding(paddingValues),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 100.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(uiState.products, key = { it.id }) { product ->
@@ -155,11 +115,11 @@ fun AdminMenuScreen(
         var price by remember { mutableStateOf(uiState.editingProduct?.price?.toString() ?: "") }
         var description by remember { mutableStateOf(uiState.editingProduct?.description ?: "") }
         var imageUrl by remember { mutableStateOf(uiState.editingProduct?.imageUrl ?: "") }
+        var isSpicy by remember { mutableStateOf(uiState.editingProduct?.isSpicy ?: false) }
+        var isVegetarian by remember { mutableStateOf(uiState.editingProduct?.isVegetarian ?: false) }
         var isCategoryExpanded by remember { mutableStateOf(false) }
 
-        val imagePickerLauncher = rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.GetContent()
-        ) { uri: Uri? -> uri?.let { viewModel.uploadImage(it, context) { url -> imageUrl = url } } }
+        val imagePickerLauncher = rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri: Uri? -> uri?.let { viewModel.uploadImage(it, context) { url -> imageUrl = url } } }
 
         AlertDialog(
             onDismissRequest = { viewModel.closeDialog() },
@@ -169,32 +129,29 @@ fun AdminMenuScreen(
                     OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Название") }, modifier = Modifier.fillMaxWidth())
                     
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        ExposedDropdownMenuBox(
-                            expanded = isCategoryExpanded,
-                            onExpandedChange = { isCategoryExpanded = !isCategoryExpanded },
-                            modifier = Modifier.weight(1f)
-                        ) {
+                        ExposedDropdownMenuBox(expanded = isCategoryExpanded, onExpandedChange = { isCategoryExpanded = !isCategoryExpanded }, modifier = Modifier.weight(1f)) {
                             OutlinedTextField(
                                 value = category, onValueChange = {}, readOnly = true, label = { Text("Категория") },
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isCategoryExpanded) },
                                 modifier = Modifier.menuAnchor().fillMaxWidth()
                             )
-                            ExposedDropdownMenu(
-                                expanded = isCategoryExpanded, onDismissRequest = { isCategoryExpanded = false }
-                            ) {
-                                uiState.availableCategories.forEach { cat ->
-                                    DropdownMenuItem(text = { Text(cat) }, onClick = { category = cat; isCategoryExpanded = false })
-                                }
+                            ExposedDropdownMenu(expanded = isCategoryExpanded, onDismissRequest = { isCategoryExpanded = false }) {
+                                uiState.availableCategories.forEach { cat -> DropdownMenuItem(text = { Text(cat) }, onClick = { category = cat; isCategoryExpanded = false }) }
                             }
                         }
-                        IconButton(onClick = { showCatDialog = true }) {
-                            Icon(Icons.Default.Add, contentDescription = "Управление категориями", tint = MaterialTheme.colorScheme.primary)
-                        }
+                        IconButton(onClick = { showCatDialog = true }) { Icon(Icons.Default.Add, "Новая категория", tint = MaterialTheme.colorScheme.primary) }
                     }
 
                     OutlinedTextField(value = price, onValueChange = { price = it }, label = { Text("Цена (₽)") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth())
                     OutlinedTextField(value = description, onValueChange = { description = it }, label = { Text("Описание") }, modifier = Modifier.fillMaxWidth())
                     
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(checked = isSpicy, onCheckedChange = { isSpicy = it })
+                        Text("Острое", modifier = Modifier.padding(end = 16.dp))
+                        Checkbox(checked = isVegetarian, onCheckedChange = { isVegetarian = it })
+                        Text("Вегетарианское")
+                    }
+
                     Row(modifier = Modifier.fillMaxWidth().clickable { imagePickerLauncher.launch("image/*") }.padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Add, null, tint = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.width(8.dp))
@@ -206,7 +163,7 @@ fun AdminMenuScreen(
                 }
             },
             confirmButton = {
-                Button(onClick = { viewModel.saveProduct(name, category, price.toDoubleOrNull() ?: 0.0, description, imageUrl) }, enabled = !uiState.isUploading) { Text("Сохранить") }
+                Button(onClick = { viewModel.saveProduct(name, category, price.toDoubleOrNull() ?: 0.0, description, imageUrl, isSpicy, isVegetarian) }, enabled = !uiState.isUploading) { Text("Сохранить") }
             },
             dismissButton = { TextButton(onClick = { viewModel.closeDialog() }) { Text("Отмена") } }
         )

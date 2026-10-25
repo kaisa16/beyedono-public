@@ -32,37 +32,28 @@ class MenuViewModel @Inject constructor(
 
     private fun loadFavorites() {
         viewModelScope.launch {
-            favoritesRepository.favorites.collect { ids ->
-                _uiState.update { it.copy(favoriteIds = ids) }
-            }
+            favoritesRepository.favorites.collect { ids -> _uiState.update { it.copy(favoriteIds = ids) } }
         }
     }
 
     fun toggleFavorite(productId: String) {
-        viewModelScope.launch {
-            favoritesRepository.toggleFavorite(productId)
-        }
+        viewModelScope.launch { favoritesRepository.toggleFavorite(productId) }
     }
 
     fun loadMenu() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            menuRepository.syncMenu()
+            val cats = menuRepository.syncMenu().getOrDefault(emptyList())
+            
             menuRepository.getLocalProducts().collect { entities ->
                 allProducts = entities.map {
                     Product(
-                        id = it.id, categoryId = it.categoryId, name = it.name,
-                        description = it.description, price = it.price, imageUrl = it.imageUrl,
-                        isAvailable = it.isAvailable, isSpicy = it.isSpicy, isVegetarian = it.isVegetarian
+                        id = it.id, categoryId = it.categoryId, name = it.name, description = it.description,
+                        price = it.price, imageUrl = it.imageUrl, isAvailable = it.isAvailable, isSpicy = it.isSpicy, isVegetarian = it.isVegetarian
                     )
                 }
-                
-                // СОБИРАЕМ УНИКАЛЬНЫЕ КАТЕГОРИИ
-                val uniqueCategories = listOf("Все") + allProducts.map { it.categoryId }.distinct().sorted()
-                
-                _uiState.update { it.copy(categories = uniqueCategories) }
+                _uiState.update { it.copy(categories = listOf("Все") + cats, isLoading = false) }
                 filterProducts()
-                _uiState.update { it.copy(isLoading = false) }
             }
         }
     }
@@ -77,15 +68,33 @@ class MenuViewModel @Inject constructor(
         filterProducts()
     }
 
+    fun toggleSpicyFilter() {
+        _uiState.update { it.copy(showOnlySpicy = !it.showOnlySpicy) }
+        filterProducts()
+    }
+
+    fun toggleVegetarianFilter() {
+        _uiState.update { it.copy(showOnlyVegetarian = !it.showOnlyVegetarian) }
+        filterProducts()
+    }
+
     private fun filterProducts() {
         val state = _uiState.value
         var filtered = allProducts
+
         if (state.selectedCategory != "Все") {
             filtered = filtered.filter { it.categoryId.equals(state.selectedCategory, ignoreCase = true) }
         }
         if (state.searchQuery.isNotBlank()) {
             filtered = filtered.filter { it.name.contains(state.searchQuery, ignoreCase = true) }
         }
+        if (state.showOnlySpicy) {
+            filtered = filtered.filter { it.isSpicy }
+        }
+        if (state.showOnlyVegetarian) {
+            filtered = filtered.filter { it.isVegetarian }
+        }
+
         _uiState.update { it.copy(products = filtered) }
     }
 }

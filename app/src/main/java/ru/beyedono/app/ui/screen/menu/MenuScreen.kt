@@ -8,6 +8,8 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Eco
+import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -55,6 +57,28 @@ fun MenuScreen(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                // Фильтры
+                item {
+                    FilterChip(
+                        selected = uiState.showOnlySpicy,
+                        onClick = viewModel::toggleSpicyFilter,
+                        label = { Text("Острое") },
+                        leadingIcon = { Icon(Icons.Default.LocalFireDepartment, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                    )
+                }
+                item {
+                    FilterChip(
+                        selected = uiState.showOnlyVegetarian,
+                        onClick = viewModel::toggleVegetarianFilter,
+                        label = { Text("Вегетарианское") },
+                        leadingIcon = { Icon(Icons.Default.Eco, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                    )
+                }
+                // Разделитель
+                item {
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+                // Категории
                 items(uiState.categories) { category ->
                     FilterChip(
                         selected = uiState.selectedCategory == category,
@@ -77,10 +101,10 @@ fun MenuScreen(
                     items(uiState.products) { product ->
                         ProductCard(
                             product = product,
-                            isFavorite = uiState.favoriteIds.contains(product.id), // <--- ТЕПЕРЬ ПЕРЕДАЕМ
+                            isFavorite = uiState.favoriteIds.contains(product.id),
                             onClick = { onProductClick(product.id) },
                             onAddToCart = { onProductClick(product.id) },
-                            onFavoriteToggle = { viewModel.toggleFavorite(product.id) } // <--- И ЭТО
+                            onFavoriteToggle = { viewModel.toggleFavorite(product.id) }
                         )
                     }
                 }

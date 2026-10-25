@@ -24,6 +24,7 @@ import ru.beyedono.app.ui.screen.menu.MenuScreen
 import ru.beyedono.app.ui.screen.onboarding.OnboardingScreen
 import ru.beyedono.app.ui.screen.orderstatus.OrderStatusScreen
 import ru.beyedono.app.ui.screen.payment.PaymentScreen
+import ru.beyedono.app.ui.screen.policy.PrivacyPolicyScreen
 import ru.beyedono.app.ui.screen.product.ProductDetailScreen
 import ru.beyedono.app.ui.screen.profile.ProfileScreen
 import ru.beyedono.app.ui.screen.settings.SettingsScreen
@@ -33,9 +34,7 @@ import ru.beyedono.app.ui.screen.splash.SplashScreen
 fun BeyedonoNavHost(navController: NavHostController = rememberNavController()) {
     
     val onAuthSuccess = {
-        val isFromCheckout = navController.currentBackStack.value.any { 
-            it.destination.route?.startsWith("checkout") == true 
-        }
+        val isFromCheckout = navController.currentBackStack.value.any { it.destination.route?.startsWith("checkout") == true }
         if (isFromCheckout) {
             navController.popBackStack(Routes.CHECKOUT, false)
         } else {
@@ -59,10 +58,7 @@ fun BeyedonoNavHost(navController: NavHostController = rememberNavController()) 
             )
         }
         composable(Routes.REGISTER) {
-            RegisterScreen(
-                onNavigateToLogin = { navController.popBackStack() }, 
-                onRegisterSuccess = { onAuthSuccess() }
-            )
+            RegisterScreen(onNavigateToLogin = { navController.popBackStack() }, onRegisterSuccess = { onAuthSuccess() })
         }
         composable(Routes.FORGOT_PASSWORD) { ForgotPasswordScreen(onNavigateBack = { navController.popBackStack() }) }
         composable(Routes.MENU) {
@@ -72,15 +68,9 @@ fun BeyedonoNavHost(navController: NavHostController = rememberNavController()) 
             ProductDetailScreen(onNavigateBack = { navController.popBackStack() }, onCartClick = { navController.navigate(Routes.CART) })
         }
         composable(Routes.CART) {
-            CartScreen(
-                onNavigateBack = { navController.popBackStack() }, 
-                onCheckoutClick = { promoCode -> navController.navigate(Routes.checkout(promoCode)) }
-            )
+            CartScreen(onNavigateBack = { navController.popBackStack() }, onCheckoutClick = { promoCode -> navController.navigate(Routes.checkout(promoCode)) })
         }
-        composable(
-            route = Routes.CHECKOUT,
-            arguments = listOf(navArgument("promoCode") { type = NavType.StringType; defaultValue = "" })
-        ) {
+        composable(route = Routes.CHECKOUT, arguments = listOf(navArgument("promoCode") { type = NavType.StringType; defaultValue = "" })) {
             CheckoutScreen(
                 onNavigateBack = { navController.popBackStack() }, 
                 onNavigateToMap = { navController.navigate(Routes.ADDRESS_PICKER) },
@@ -100,10 +90,7 @@ fun BeyedonoNavHost(navController: NavHostController = rememberNavController()) 
             )
         }
         composable(route = Routes.PAYMENT, arguments = listOf(navArgument("orderId") { type = NavType.StringType })) {
-            PaymentScreen(
-                onNavigateBack = { navController.navigate(Routes.MENU) { popUpTo(Routes.MENU) { inclusive = true } } }, 
-                onPaymentSuccess = { orderId -> navController.navigate(Routes.orderStatus(orderId)) { popUpTo(Routes.MENU) { inclusive = false } } }
-            )
+            PaymentScreen(onNavigateBack = { navController.navigate(Routes.MENU) { popUpTo(Routes.MENU) { inclusive = true } } }, onPaymentSuccess = { orderId -> navController.navigate(Routes.orderStatus(orderId)) { popUpTo(Routes.MENU) { inclusive = false } } })
         }
         composable(route = Routes.ORDER_STATUS, arguments = listOf(navArgument("orderId") { type = NavType.StringType })) {
             OrderStatusScreen(onNavigateBack = { navController.navigate(Routes.MENU) { popUpTo(Routes.MENU) { inclusive = true } } })
@@ -123,29 +110,18 @@ fun BeyedonoNavHost(navController: NavHostController = rememberNavController()) 
                 onNavigateToAddresses = { navController.navigate(Routes.MY_ADDRESSES) },
                 onNavigateToAbout = { navController.navigate(Routes.ABOUT_CAFE) },
                 onNavigateToFavorites = { navController.navigate(Routes.FAVORITES) },
+                onNavigateToPrivacy = { navController.navigate(Routes.PRIVACY_POLICY) },
                 onLogout = { navController.navigate(Routes.LOGIN) { popUpTo(0) { inclusive = true } } }
             )
         }
         composable(Routes.SETTINGS) {
             SettingsScreen(onNavigateBack = { navController.popBackStack() }, onNavigateToAdmin = { navController.navigate(Routes.ADMIN_ORDERS) })
         }
-        
-        composable(Routes.ADMIN_ORDERS) { 
-            AdminOrdersScreen(
-                onNavigateBack = { navController.popBackStack() },
-                onNavigateToMenu = { navController.navigate(Routes.ADMIN_MENU) } // <--- ПЕРЕХОД
-            ) 
-        }
-        
-        // НОВЫЙ МАРШРУТ ДЛЯ МЕНЮ АДМИНА
-        composable(Routes.ADMIN_MENU) {
-            AdminMenuScreen(onNavigateBack = { navController.popBackStack() })
-        }
-        
+        composable(Routes.ADMIN_ORDERS) { AdminOrdersScreen(onNavigateBack = { navController.popBackStack() }, onNavigateToMenu = { navController.navigate(Routes.ADMIN_MENU) }) }
+        composable(Routes.ADMIN_MENU) { AdminMenuScreen(onNavigateBack = { navController.popBackStack() }) }
         composable(Routes.MY_ADDRESSES) { AddressListScreen(onNavigateBack = { navController.popBackStack() }) }
         composable(Routes.ABOUT_CAFE) { AboutCafeScreen(onNavigateBack = { navController.popBackStack() }) }
-        composable(Routes.FAVORITES) {
-            FavoriteScreen(onNavigateBack = { navController.popBackStack() }, onProductClick = { id -> navController.navigate(Routes.productDetail(id)) })
-        }
+        composable(Routes.FAVORITES) { FavoriteScreen(onNavigateBack = { navController.popBackStack() }, onProductClick = { id -> navController.navigate(Routes.productDetail(id)) }) }
+        composable(Routes.PRIVACY_POLICY) { PrivacyPolicyScreen(onNavigateBack = { navController.popBackStack() }) }
     }
 }
