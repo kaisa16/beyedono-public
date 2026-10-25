@@ -59,7 +59,12 @@ fun BeyedonoNavHost(navController: NavHostController = rememberNavController()) 
             CartScreen(onNavigateBack = { navController.popBackStack() }, onCheckoutClick = { discount -> navController.navigate(Routes.checkout(discount)) })
         }
         composable(route = Routes.CHECKOUT, arguments = listOf(navArgument("discount") { type = NavType.StringType })) {
-            CheckoutScreen(onNavigateBack = { navController.popBackStack() }, onNavigateToMap = { navController.navigate(Routes.ADDRESS_PICKER) }, onOrderPlaced = { orderId -> navController.navigate(Routes.payment(orderId)) { popUpTo(Routes.MENU) { inclusive = false } } })
+            CheckoutScreen(
+                onNavigateBack = { navController.popBackStack() }, 
+                onNavigateToMap = { navController.navigate(Routes.ADDRESS_PICKER) },
+                onNavigateToLogin = { navController.navigate(Routes.LOGIN) { popUpTo(Routes.MENU) } }, // <--- ПЕРЕХОД НА ЛОГИН
+                onOrderPlaced = { orderId -> navController.navigate(Routes.payment(orderId)) { popUpTo(Routes.MENU) { inclusive = false } } }
+            )
         }
         composable(Routes.ADDRESS_PICKER) {
             AddressPickerScreen(
@@ -73,7 +78,11 @@ fun BeyedonoNavHost(navController: NavHostController = rememberNavController()) 
             )
         }
         composable(route = Routes.PAYMENT, arguments = listOf(navArgument("orderId") { type = NavType.StringType })) {
-            PaymentScreen(onNavigateBack = { navController.popBackStack() }, onPaymentSuccess = { orderId -> navController.navigate(Routes.orderStatus(orderId)) { popUpTo(Routes.MENU) { inclusive = false } } })
+            PaymentScreen(
+                // Если нажмут "Назад" на оплате - кидаем в меню, чтобы не было пустой корзины
+                onNavigateBack = { navController.navigate(Routes.MENU) { popUpTo(Routes.MENU) { inclusive = true } } }, 
+                onPaymentSuccess = { orderId -> navController.navigate(Routes.orderStatus(orderId)) { popUpTo(Routes.MENU) { inclusive = false } } }
+            )
         }
         composable(route = Routes.ORDER_STATUS, arguments = listOf(navArgument("orderId") { type = NavType.StringType })) {
             OrderStatusScreen(onNavigateBack = { navController.navigate(Routes.MENU) { popUpTo(Routes.MENU) { inclusive = true } } })
@@ -82,11 +91,7 @@ fun BeyedonoNavHost(navController: NavHostController = rememberNavController()) 
             OrderHistoryScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onOrderClick = { orderId -> navController.navigate(Routes.orderStatus(orderId)) },
-                onGoToCart = { 
-                    navController.navigate(Routes.CART) {
-                        popUpTo(Routes.PROFILE) { inclusive = false }
-                    } 
-                }
+                onGoToCart = { navController.navigate(Routes.CART) { popUpTo(Routes.PROFILE) { inclusive = false } } }
             )
         }
         composable(Routes.PROFILE) {
@@ -107,10 +112,7 @@ fun BeyedonoNavHost(navController: NavHostController = rememberNavController()) 
         composable(Routes.MY_ADDRESSES) { AddressListScreen(onNavigateBack = { navController.popBackStack() }) }
         composable(Routes.ABOUT_CAFE) { AboutCafeScreen(onNavigateBack = { navController.popBackStack() }) }
         composable(Routes.FAVORITES) {
-            FavoriteScreen(
-                onNavigateBack = { navController.popBackStack() },
-                onProductClick = { id -> navController.navigate(Routes.productDetail(id)) }
-            )
+            FavoriteScreen(onNavigateBack = { navController.popBackStack() }, onProductClick = { id -> navController.navigate(Routes.productDetail(id)) })
         }
     }
 }

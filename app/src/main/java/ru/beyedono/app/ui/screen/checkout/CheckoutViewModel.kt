@@ -57,6 +57,8 @@ class CheckoutViewModel @Inject constructor(
         viewModelScope.launch {
             val user = userDao.getUser().first()
             val userId = user?.id ?: "guest"
+            _uiState.update { it.copy(isGuest = user == null) } // <--- ПРОВЕРКА НА ГОСТЯ
+            
             addressDao.getAddressesByUser(userId).collect { saved ->
                 val uniqueAddresses = saved.distinctBy { "${it.street}_${it.house}_${it.apartment}" }
                 _uiState.update { it.copy(savedAddresses = uniqueAddresses) }
@@ -77,8 +79,13 @@ class CheckoutViewModel @Inject constructor(
     fun placeOrder() {
         val state = _uiState.value
         
+        if (state.isGuest) {
+            _uiState.update { it.copy(error = "Войдите в аккаунт, чтобы сделать заказ") }
+            return
+        }
+
         if (state.cartItems.isEmpty()) {
-            _uiState.update { it.copy(error = "Корзина пуста. Добавьте товары.") }
+            _uiState.update { it.copy(error = "Корзина пуста") }
             return
         }
 
@@ -119,7 +126,7 @@ class CheckoutViewModel @Inject constructor(
                 discount = state.discount,
                 deliveryPrice = state.deliveryPrice,
                 userEmail = userEmail,
-                promoCode = state.promoCode // <--- ПЕРЕДАЕМ ПРОМОКОД НА СЕРВЕР
+                promoCode = state.promoCode
             )
 
             result.onSuccess { orderId ->

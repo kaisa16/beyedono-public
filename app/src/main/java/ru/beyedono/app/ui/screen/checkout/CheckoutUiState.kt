@@ -22,6 +22,7 @@ data class CheckoutUiState(
     val paymentMethod: String = "SBP",
     val promoCode: String = "",
     val isLoading: Boolean = false,
+    val isGuest: Boolean = false, // <--- НОВОЕ ПОЛЕ
     val error: String? = null,
     val createdOrderId: String? = null
 )

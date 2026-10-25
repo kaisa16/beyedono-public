@@ -27,6 +27,7 @@ import ru.beyedono.app.domain.util.PriceFormatter
 fun CheckoutScreen(
     onNavigateBack: () -> Unit,
     onNavigateToMap: () -> Unit,
+    onNavigateToLogin: () -> Unit, // <--- НОВЫЙ ПАРАМЕТР
     onOrderPlaced: (String) -> Unit,
     viewModel: CheckoutViewModel = hiltViewModel()
 ) {
@@ -47,13 +48,24 @@ fun CheckoutScreen(
         },
         bottomBar = {
             Column(modifier = Modifier.padding(16.dp)) {
-                Button(
-                    onClick = viewModel::placeOrder,
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
-                    enabled = !uiState.isLoading && uiState.cartItems.isNotEmpty()
-                ) {
-                    if (uiState.isLoading) CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.height(24.dp))
-                    else Text("Заказать за ${PriceFormatter.format(uiState.total)}")
+                if (uiState.isGuest) {
+                    // Если гость - показываем кнопку входа вместо "Заказать"
+                    Button(
+                        onClick = onNavigateToLogin,
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                    ) {
+                        Text("Войти и заказать", color = MaterialTheme.colorScheme.onSecondary)
+                    }
+                } else {
+                    Button(
+                        onClick = viewModel::placeOrder,
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        enabled = !uiState.isLoading && uiState.cartItems.isNotEmpty()
+                    ) {
+                        if (uiState.isLoading) CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.height(24.dp))
+                        else Text("Заказать за ${PriceFormatter.format(uiState.total)}")
+                    }
                 }
             }
         }
@@ -62,7 +74,6 @@ fun CheckoutScreen(
             Text("Адрес доставки", style = MaterialTheme.typography.titleLarge)
             Spacer(modifier = Modifier.height(8.dp))
             
-            // Сохраненные адреса
             if (uiState.savedAddresses.isNotEmpty()) {
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -71,9 +82,7 @@ fun CheckoutScreen(
                     items(uiState.savedAddresses) { address ->
                         SuggestionChip(
                             onClick = { viewModel.onSelectSavedAddress(address) },
-                            label = { 
-                                Text("${address.street}, ${address.house}" + if (!address.apartment.isNullOrBlank()) "/${address.apartment}" else "")
-                            },
+                            label = { Text("${address.street}, ${address.house}") },
                             icon = { Icon(Icons.Default.LocationOn, contentDescription = null, modifier = Modifier.size(16.dp)) }
                         )
                     }
