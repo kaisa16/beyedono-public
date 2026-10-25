@@ -41,7 +41,6 @@ class AdminMenuViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true) }
             menuRepository.syncMenu()
             menuRepository.getLocalProducts().collect { prods ->
-                // Получаем список категорий из базы через API
                 val cats = mutableListOf("Пиццы", "Роллы", "Основные блюда", "Салаты", "Фаст-Фуд", "Гамбургеры", "Напитки") 
                 cats.addAll(prods.map { it.categoryId })
                 
@@ -60,14 +59,15 @@ class AdminMenuViewModel @Inject constructor(
     fun openEditDialog(product: ProductEntity) = _uiState.update { it.copy(showDialog = true, editingProduct = product, error = null) }
     fun closeDialog() = _uiState.update { it.copy(showDialog = false) }
 
-    fun openCategoryDialog(category: String? = null) = _uiState.update { it.copy(showCategoryDialog = true, editingCategory = category, error = null) }
-    fun closeCategoryDialog() = _uiState.update { it.copy(showCategoryDialog = false) }
-
-    fun saveCategory(name: String) {
+    fun addCategory(name: String) {
         viewModelScope.launch {
-            val editing = _uiState.value.editingCategory
-            val result = if (editing == null) adminRepository.addCategory(name) else adminRepository.renameCategory(editing, name)
-            result.onSuccess { closeCategoryDialog() }.onFailure { err -> _uiState.update { it.copy(error = err.message) } }
+            adminRepository.addCategory(name).onFailure { err -> _uiState.update { it.copy(error = err.message) } }
+        }
+    }
+
+    fun renameCategory(oldName: String, newName: String) {
+        viewModelScope.launch {
+            adminRepository.renameCategory(oldName, newName).onFailure { err -> _uiState.update { it.copy(error = err.message) } }
         }
     }
 

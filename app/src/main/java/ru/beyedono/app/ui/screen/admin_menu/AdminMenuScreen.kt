@@ -31,7 +31,13 @@ fun AdminMenuScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     var showDeleteDialog by remember { mutableStateOf<String?>(null) }
+    
+    // Переменные для диалога управления категориями
+    var showCatDialog by remember { mutableStateOf(false) }
+    var catInput by remember { mutableStateOf("") }
+    var editingCat by remember { mutableStateOf<String?>(null) }
 
+    // Диалог удаления ТОВАРА
     if (showDeleteDialog != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = null },
@@ -47,21 +53,59 @@ fun AdminMenuScreen(
     }
 
     // ДИАЛОГ УПРАВЛЕНИЯ КАТЕГОРИЯМИ
-    if (uiState.showCategoryDialog) {
-        var catName by remember { mutableStateOf(uiState.editingCategory ?: "") }
+    if (showCatDialog) {
         AlertDialog(
-            onDismissRequest = { viewModel.closeCategoryDialog() },
-            title = { Text(if (uiState.editingCategory == null) "Новая категория" else "Переименовать") },
+            onDismissRequest = { showCatDialog = false; catInput = ""; editingCat = null },
+            title = { Text("Управление категориями") },
             text = {
-                Column {
-                    OutlinedTextField(value = catName, onValueChange = { catName = it }, label = { Text("Название категории") }, modifier = Modifier.fillMaxWidth())
-                    uiState.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 8.dp)) }
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        OutlinedTextField(
+                            value = catInput, 
+                            onValueChange = { catInput = it }, 
+                            label = { Text(if (editingCat == null) "Новая категория" else "Новое имя") }, 
+                            modifier = Modifier.weight(1f)
+                        )
+                        IconButton(onClick = { 
+                            if (catInput.isNotBlank()) {
+                                if (editingCat == null) viewModel.addCategory(catInput) else viewModel.renameCategory(editingCat!!, catInput)
+                                catInput = ""
+                                editingCat = null
+                            }
+                        }) {
+                            Icon(Icons.Default.Check, contentDescription = "Сохранить", tint = MaterialTheme.colorScheme.primary)
+                        }
+                    }
+                    
+                    uiState.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+                    
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                    Text("Существующие категории:", style = MaterialTheme.typography.titleSmall)
+                    
+                    LazyColumn(modifier = Modifier.heightIn(max = 300.dp)) {
+                        items(uiState.availableCategories) { cat ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(cat, style = MaterialTheme.typography.bodyMedium)
+                                Row {
+                                    IconButton(onClick = { editingCat = cat; catInput = cat }) {
+                                        Icon(Icons.Default.Edit, contentDescription = "Переименовать", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                                    }
+                                    IconButton(onClick = { viewModel.deleteCategory(cat) }) {
+                                        Icon(Icons.Default.Delete, contentDescription = "Удалить", tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(20.dp))
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             },
             confirmButton = {
-                Button(onClick = { viewModel.saveCategory(catName) }) { Text("Сохранить") }
-            },
-            dismissButton = { TextButton(onClick = { viewModel.closeCategoryDialog() }) { Text("Отмена") } }
+                TextButton(onClick = { showCatDialog = false; catInput = ""; editingCat = null }) { Text("Закрыть") }
+            }
         )
     }
 
@@ -71,8 +115,7 @@ fun AdminMenuScreen(
                 title = { Text("Управление меню") },
                 navigationIcon = { IconButton(onClick = onNavigateBack) { Icon(Icons.Default.ArrowBack, null) } },
                 actions = {
-                    // КНОПКА УПРАВЛЕНИЯ КАТЕГОРИЯМИ
-                    IconButton(onClick = { viewModel.openCategoryDialog() }) {
+                    IconButton(onClick = { showCatDialog = true }) {
                         Icon(Icons.Default.List, contentDescription = "Категории")
                     }
                 }
@@ -144,8 +187,8 @@ fun AdminMenuScreen(
                                 }
                             }
                         }
-                        IconButton(onClick = { viewModel.openCategoryDialog() }) {
-                            Icon(Icons.Default.Add, contentDescription = "Новая категория", tint = MaterialTheme.colorScheme.primary)
+                        IconButton(onClick = { showCatDialog = true }) {
+                            Icon(Icons.Default.Add, contentDescription = "Управление категориями", tint = MaterialTheme.colorScheme.primary)
                         }
                     }
 
