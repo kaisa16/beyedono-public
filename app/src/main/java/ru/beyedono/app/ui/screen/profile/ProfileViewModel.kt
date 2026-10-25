@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import ru.beyedono.app.data.local.dao.UserDao
 import ru.beyedono.app.data.repository.AuthRepository
 import ru.beyedono.app.data.repository.ProfileRepository
+import ru.beyedono.app.domain.util.Validators
 import javax.inject.Inject
 
 @HiltViewModel
@@ -37,8 +38,18 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun updateProfile(name: String, phone: String, onSuccess: () -> Unit) {
+        // ВАЛИДАЦИЯ
+        if (name.isBlank() || name.length < 2) {
+            _uiState.update { it.copy(error = "Слишком короткое имя") }
+            return
+        }
+        if (phone.isNotBlank() && !Validators.isValidPhone(phone)) {
+            _uiState.update { it.copy(error = "Некорректный номер телефона") }
+            return
+        }
+
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+            _uiState.update { it.copy(isLoading = true, error = null) }
             profileRepository.updateProfile(name, phone)
                 .onSuccess {
                     _uiState.update { it.copy(isLoading = false) }

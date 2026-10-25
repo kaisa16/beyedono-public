@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import ru.beyedono.app.data.local.dao.ProductDao
 import ru.beyedono.app.data.repository.CartRepository
 import ru.beyedono.app.data.repository.OrderRepository
 import javax.inject.Inject
@@ -16,7 +17,8 @@ import javax.inject.Inject
 @HiltViewModel
 class OrderHistoryViewModel @Inject constructor(
     private val orderRepository: OrderRepository,
-    private val cartRepository: CartRepository
+    private val cartRepository: CartRepository,
+    private val productDao: ProductDao // <--- ДОБАВЛЕНО ДЛЯ ЦЕН
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(OrderHistoryUiState())
@@ -41,9 +43,18 @@ class OrderHistoryViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true) }
             orderRepository.getOrderDetailsFromServer(orderId)
                 .onSuccess { response ->
-                    cartRepository.clearCart() // Очищаем старую корзину перед повтором
+                    cartRepository.clearCart() 
+                    
                     response.items.forEach { item ->
-                        cartRepository.addQuantityToCart(item.productId, item.price, item.quantity)
+                        // БЕРЕМ АКТУАЛЬНУЮ ЦЕНУ ИЗ БАЗЫ
+                        val currentProduct = productDao.getProductById(item.productId)
+                        if (currentProduct != null) {
+                            cartRepository.addQuantityToCart(
+                                productId = currentProduct.id, 
+                                price = currentProduct.price, // Актуальная цена
+                                quantity = item.quantity
+                            )
+                        }
                     }
                     _uiState.update { it.copy(isLoading = false) }
                     onSuccess()

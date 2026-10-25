@@ -20,33 +20,41 @@ class CartViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(CartUiState())
     val uiState: StateFlow<CartUiState> = _uiState.asStateFlow()
+    
+    // Храним текущий примененный промокод
+    private var appliedPromoCode: String = ""
 
     init {
         viewModelScope.launch {
             cartRepository.getCartItems().collect { items ->
-                val subtotal = items.sumOf { it.totalPrice }
-                val delivery = if (subtotal >= 1500 || subtotal == 0.0) 0.0 else 200.0
-                val discount = _uiState.value.discount
-                _uiState.update { it.copy(
-                    items = items,
-                    subtotal = subtotal,
-                    deliveryPrice = delivery,
-                    total = subtotal + delivery - discount
-                ) }
+                _uiState.update { state ->
+                    val subtotal = items.sumOf { it.totalPrice }
+                    val delivery = if (subtotal >= 1500 || subtotal == 0.0) 0.0 else 200.0
+                    
+                    // ПЕРЕСЧЕТ СКИДКИ
+                    var discountPercent = 0.0
+                    if (appliedPromoCode == "BEYEDONO") discountPercent = 0.10
+                    
+                    val discountAmount = subtotal * discountPercent
+                    
+                    state.copy(
+                        items = items,
+                        subtotal = subtotal,
+                        deliveryPrice = delivery,
+                        discount = discountAmount,
+                        total = subtotal + delivery - discountAmount
+                    )
+                }
             }
         }
     }
 
     fun increaseQuantity(productId: String, price: Double) {
-        viewModelScope.launch {
-            cartRepository.addToCart(productId, price)
-        }
+        viewModelScope.launch { cartRepository.addToCart(productId, price) }
     }
 
     fun decreaseQuantity(productId: String) {
-        viewModelScope.launch {
-            cartRepository.removeFromCart(productId)
-        }
+        viewModelScope.launch { cartRepository.removeFromCart(productId) }
     }
 
     fun deleteItem(productId: String) {
@@ -66,27 +74,14 @@ class CartViewModel @Inject constructor(
 
     fun applyPromoCode() {
         val code = _uiState.value.promoCode.uppercase()
-        var discountPercent = 0.0
+        if (code == "BEYEDONO" || code == "YAKUTIA" || code == "WELCOME") {
+            appliedPromoCode = code
+        } else {
+            appliedPromoCode = "" // Сбрасываем, если код неверный
+        }
         
-        // Логика промокодов
-        when (code) {
-            "BEYEDONO" -> discountPercent = 0.10
-            "YAKUTIA" -> discountPercent = 0.15
-            "WELCOME" -> discountPercent = 0.05
-        }
-
-        val discountAmount = _uiState.value.subtotal * discountPercent
-        _uiState.update { it.copy(discount = discountAmount) }
-        recalculateTotal()
-    }
-
-    private fun recalculateTotal() {
-        _uiState.update {
-            val delivery = if (it.subtotal >= 1500 || it.subtotal == 0.0) 0.0 else 200.0
-            it.copy(
-                deliveryPrice = delivery,
-                total = it.subtotal + delivery - it.discount
-            )
-        }
+        // Триггерим пересчет (вызываем обновление состояния)
+        val items = _uiState.value.items
+        _uiState.update { it.copy(items = items) } 
     }
 }

@@ -77,6 +77,13 @@ class CheckoutViewModel @Inject constructor(
 
     fun placeOrder() {
         val state = _uiState.value
+        
+        // ЗАЩИТА ОТ ПУСТОГО ЗАКАЗА
+        if (state.cartItems.isEmpty()) {
+            _uiState.update { it.copy(error = "Корзина пуста. Добавьте товары.") }
+            return
+        }
+
         if (state.street.isBlank() || state.house.isBlank()) {
             _uiState.update { it.copy(error = "Заполните улицу и дом") }
             return
