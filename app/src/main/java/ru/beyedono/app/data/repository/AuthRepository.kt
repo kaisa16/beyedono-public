@@ -48,9 +48,19 @@ class AuthRepository @Inject constructor(
         updateFcmToken(email)
     }
 
+    // Этот метод мы использовали при входе/регистрации
     suspend fun updateFcmToken(email: String) {
         try {
             val token = FirebaseMessaging.getInstance().token.await()
+            authApi.saveFcmToken(FcmTokenRequest(email, token))
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    // НОВЫЙ МЕТОД: Отправляет именно тот токен, который пришел от Firebase
+    suspend fun sendFcmTokenToServer(email: String, token: String) {
+        try {
             authApi.saveFcmToken(FcmTokenRequest(email, token))
         } catch (e: Exception) {
             e.printStackTrace()
