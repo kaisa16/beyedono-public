@@ -9,6 +9,7 @@ plugins {
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.crashlytics)
 }
 
 android {
@@ -25,12 +26,11 @@ android {
     }
     signingConfigs {
         create("release") {
-            // ПАРОЛИ ВПИСАНЫ НАПРЯМУЮ, ЧТОБЫ ОБОЙТИ ОШИБКУ ЧТЕНИЯ
-            storeFile = file("../beyedono-release.jks")
+            storeFile = file("/storage/internal_new/project/beyedono/beyedono-release.jks")
             storePassword = "123456"
             keyAlias = "beydono"
             keyPassword = "123456"
-            storeType = "PKCS12" // Указываем формат явно
+            storeType = "PKCS12"
         }
     }
     buildTypes {
@@ -87,10 +87,16 @@ dependencies {
     implementation(libs.okhttp.logging)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.android)
+    
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.messaging)
+    implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.analytics)
+    
+    // БИБЛИОТЕКА OSM (возвращена)
     implementation("org.osmdroid:osmdroid-android:6.1.18")
+    
     implementation(libs.coil.compose)
     implementation(libs.androidx.datastore.preferences)
     
