@@ -22,3 +22,4 @@ backend/.mypy_cache/
 *.log
 .github/
 backend/.env
+keystore.properties
