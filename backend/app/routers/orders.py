@@ -4,6 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from typing import List
+import httpx
+import os
+from datetime import datetime
 from app.core.database import get_db
 from app.models.order import Order
 from app.models.order_item import OrderItem
@@ -11,6 +14,29 @@ from app.models.product import Product
 from app.schemas.order import OrderCreateRequest, OrderResponse, OrderItemResponse
 
 router = APIRouter()
+
+async def send_order_to_frontpad(order_data: dict):
+    """Отправляет заказ в Frontpad API"""
+    secret = os.getenv("FRONTPAD_SECRET")
+    url = os.getenv("FRONTPAD_API_URL")
+    if not secret or not url:
+        print("Frontpad secret or URL is missing in .env")
+        return
+
+    # Формируем данные для Frontpad
+    payload = {"secret": secret, **order_data}
+    
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(url, data=payload)
+            response.raise_for_status()
+            res_json = response.json()
+            if res_json.get("result") == "success":
+                print(f"Заказ успешно отправлен в Frontpad. ID: {res_json.get('order_id')}")
+            else:
+                print(f"Ошибка Frontpad: {res_json.get('error')}")
+        except Exception as e:
+            print(f"Ошибка сети при отправке в Frontpad: {e}")
 
 @router.post("", response_model=OrderResponse)
 async def create_order(order_in: OrderCreateRequest, db: AsyncSession = Depends(get_db)):
@@ -29,15 +55,20 @@ async def create_order(order_in: OrderCreateRequest, db: AsyncSession = Depends(
     db.add(order)
     await db.flush()
 
+    # Данные для Frontpad
+    fp_products = []
+    fp_quantities = []
+    fp_prices = []
+
     for item in order_in.items:
         prod_res = await db.execute(select(Product).where(Product.id == item.product_id))
         product = prod_res.scalars().first()
         if not product:
             raise HTTPException(status_code=404, detail=f"Product {item.product_id} not found")
-        
+
         item_total = product.price * item.quantity
         total_price += item_total
-        
+
         oi = OrderItem(
             order_id=order.id,
             product_id=product.id,
@@ -47,10 +78,32 @@ async def create_order(order_in: OrderCreateRequest, db: AsyncSession = Depends(
         db.add(oi)
         order_items.append(oi)
 
+        # Собираем данные для Frontpad
+        # ВАЖНО: здесь product.id должен быть числовым артикулом из Frontpad.
+        # Если у тебя строковый ID, используй поле product.sku или другое поле.
+        fp_products.append(str(product.id))
+        fp_quantities.append(str(item.quantity))
+        fp_prices.append(str(product.price))
+
     order.total_price = total_price
     await db.commit()
     await db.refresh(order)
+
+    # Подготовка к отправке в Frontpad
+    # ВАЖНО: замени 'street' на реальное поле из твоего order_in (например, order_in.address_id)
+    frontpad_payload = {
+        "product": fp_products,
+        "product_kol": fp_quantities,
+        "product_price": fp_prices,
+        "phone": "79000000000", # Вставь сюда телефон пользователя
+        "street": "Тестовая",   # Вставь сюда адрес
+        "descr": order.note or "",
+        "datetime": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
     
+    # Отправляем в фоне (не блокируя ответ пользователю)
+    await send_order_to_frontpad(frontpad_payload)
+
     return OrderResponse(
         id=order.id,
         status=order.status,
