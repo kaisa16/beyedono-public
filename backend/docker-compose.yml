@@ -1,13 +1,12 @@
-# file: backend/docker-compose.yml
 version: '3.8'
 
 services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: beydono
-      POSTGRES_PASSWORD: beydono_secret
-      POSTGRES_DB: beydono_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
@@ -15,11 +14,12 @@ services:
 
   backend:
     build: .
+    env_file: .env
     environment:
-      DATABASE_URL: postgresql+asyncpg://beyedono:beyedono_secret@db:5432/beyedono_db
-      SECRET_KEY: super_secret_jwt_key_change_in_production
-      YOOKASSA_SHOP_ID: your_shop_id
-      YOOKASSA_SECRET_KEY: your_secret_key
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      SECRET_KEY: ${SECRET_KEY}
+      YOOKASSA_SHOP_ID: ${YOOKASSA_SHOP_ID}
+      YOOKASSA_SECRET_KEY: ${YOOKASSA_SECRET_KEY}
     ports:
       - "8000:8000"
     depends_on:

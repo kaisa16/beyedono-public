@@ -21,3 +21,4 @@ backend/.pytest_cache/
 backend/.mypy_cache/
 *.log
 .github/
+backend/.env
