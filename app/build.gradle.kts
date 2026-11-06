@@ -1,6 +1,11 @@
 // file: app/build.gradle.kts
 import java.util.Properties
+import java.io.FileInputStream
 
+val keystorePropsFile = rootProject.file("keystore.properties")
+val keystoreProps = Properties().apply {
+    if (keystorePropsFile.exists()) load(FileInputStream(keystorePropsFile))
+}
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -26,14 +31,15 @@ android {
         vectorDrawables { useSupportLibrary = true }
     }
     signingConfigs {
-        create("release") {
-            storeFile = file("/storage/internal_new/project/beyedono/beyedono-release.jks")
-            storePassword = "123456"
-            keyAlias = "beydono"
-            keyPassword = "123456"
-            storeType = "PKCS12"
+    create("release") {
+        if (keystorePropsFile.exists()) {
+            storeFile = file(keystoreProps["storeFile"] as String)
+            storePassword = keystoreProps["storePassword"] as String
+            keyAlias = keystoreProps["keyAlias"] as String
+            keyPassword = keystoreProps["keyPassword"] as String
         }
     }
+}
     buildTypes {
         release {
             isMinifyEnabled = true
