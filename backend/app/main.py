@@ -1,5 +1,6 @@
 # file: backend/app/main.py
 import os
+from fastapi.staticfiles import StaticFiles
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
@@ -25,7 +26,9 @@ app.include_router(menu.router, prefix=f"{settings.API_V1_STR}/menu", tags=["men
 app.include_router(orders.router, prefix=f"{settings.API_V1_STR}/orders", tags=["orders"])
 app.include_router(payment.router, prefix=f"{settings.API_V1_STR}/payments", tags=["payments"])
 app.include_router(profile.router, prefix=f"{settings.API_V1_STR}/profile", tags=["profile"])
-
+# Разрешаем серверу отдавать картинки из папки uploads
+os.makedirs("app/uploads", exist_ok=True) # Создаст папку, если ее нет
+app.mount("/uploads", StaticFiles(directory="app/uploads"), name="uploads")
 @app.get("/")
 def root():
     return {"message": "Beyedono API is running"}
